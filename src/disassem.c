@@ -28,7 +28,7 @@
 #ifdef __USLC__
 #include <curses.h>
 #else
-#include <cursesX.h>
+#include <ncurses.h>
 #endif 
 #endif
 
