@@ -1,0 +1,144 @@
+				MAKEDSTP
+
+1 What is MakeDsTp?
+
+2 How does it work?
+
+3 How do I use MakeDsTp?
+
+4 What's in a signature file?
+
+5 What other tools are useful for signature work?
+
+
+1 What is MakeDsTp?
+-------------------
+
+MakeDsTp is the equivalent of MakeDsig for Turbo Pascal, i.e. it is a
+program that generates a signature file from turbo.tpl for a
+particular version of Turbo Pascal. A Pascal statement may generate
+several library calls, but at least the resultant code is easier to
+follow with reasonable names.
+
+
+2 How does it work?
+-------------------
+
+All the information about the system and other useful libraries is
+contained in the turbo.tpl file - except for one crucial set of data.
+Although all the system routines are in there, and all the names of
+Pascal keywords are in there, there is no information linking the
+two. Indeed, there can't, because of the non linear mapping. Here is
+an example:
+writeln("Result is ", r);
+generates calls to what I call
+WriteString, WriteInt, CrLf, and PostWrite.
+There are no names stored for these routines; I made them up by
+analysing small test programs. I have had to make an assumption that
+a certain number in the turbo.tpl file (called the pmap offset) is
+always associated with the same system helper file (e.g. 0xD8 always
+means "WriteString"). This seems to be the case in version 4.0 and
+5.0, but I have not had the opportunity to test this assumption for
+other versions.
+
+There are about 60 odd procedures in the system unit; I have named
+about 20 of these. The rest are stored in the signature file with the
+name "UNKNOWN" and its pmap offset (a unique number that is always a
+multiple of 4). For example, UNKNOWN008. When it is dicovered what
+these routines do, the appopriate line can be added to the
+EnterSystemUnit() function and MakeDsTp remade.
+
+
+3 How do I use MakeDsTp?
+------------------------
+
+You can always find out by just executing it with no arguments, or
+MakeDsTp -h  for more details.
+
+Basically, you just give it the names of the files that it needs:
+MakeDsig <libname> <signame>
+
+It will ask you for a seed; enter any number, e.g. 1.
+
+You need to have the turbo.tpl file for the appropriate version of
+Turbo Pascal. For example, to use dcc on executables created with
+Turbo Pascal version 4.0, you need the turbo.tpl file that comes with
+that compiler. This program only works on specific versions of Turbo
+Pascal, currently 4.0 and 5.0. It required detailed knowlege of the
+internals of .tpl (or .tpu files, much the same) to extend it to
+other versions. It will never work for Turbo Pascal version 3.0 or
+earlier, because these versions did not use the turbo.tpl file; no
+linking was possible.
+
+You also need to know the correct name for the signature file, i.e.
+<signame>. Dcc will detect certain Turbo Pascal version numbers, and
+will look for a signature file named like this:
+d c c t <version> p . s i g
+
+The version codes are fairly self explanatory:
+Turbo Pascal 4.0	4
+Turbo Pascal 5.0	5
+
+All Turbo Pascal executables use large model, so the only variation
+on names of the signature file are the version number, as shown
+above. The signatures for C and other languages varies in the 4th to
+6th letter.
+
+It is possible that a turbo.tpl from version 5.5 will work as if it
+was a 5.0; this is not tested.
+
+An example: the signature file for Turbo Pascal 5.0 would be
+dcct5p.sig. To generate it, you would supply as the file turbo.tpl
+that came with that compiler. Suppose it was in the \tp directory. To
+generate the signature file required to work with files produced by
+this compiler, you would type
+
+makedstp \tp\turbo.tpl dcct5p.sig
+
+This will create dcct5p.sig in the current directory. For dcc to use
+this file, place it in the same directory as dcc itself, or point the
+environment variable DCC to the directory containing it.
+
+Note that the signature files for C and most other languages are generated
+by makedsig, not makedstp. See separate documentation on this
+program.
+
+
+
+4 What's in a signature file?
+-----------------------------
+
+This is documented in makedsig.txt that comes with the MakeDsig
+program. As indicated in section 2, the names of the system procedures
+are invented, since they are not stored in the turbo.tpl file. System
+procedures that are not named will be present in the signature file
+with a name like "UNKNOWN008"; at least that way dcc knows not to
+decompile it, and the user is aware that the call is to a system
+procedure of some kind.
+
+
+
+5 What other tools are useful for signature work?
+-------------------------------------------------
+
+Makedsig - makes signature files from library (.lib) files. Needed to
+make signature files for most languages other than Turbo Pascal.
+
+SrchSig - tells you whether a given pattern exists in a signature
+file, and gives its name. You need a binary file with the signature
+in it, exactly the right length. This can most easily be done with
+debug (comes with MS-DOS).
+
+DispSig - given the name of a function, displays its signature, and
+stores the signature into a binary file as well. (You can use this
+file with srchsig on another signature file, if you want).
+
+ReadSig - reads a signature file, checking for correct structure, and
+displaying duplicate signatures. With the -a switch, it will display
+all signatures, with their symbols.
+
+The file perfhlib.c is used by various of these tools to do the work
+of the perfect hashing functions. It could be used as part of other
+tools that use signature files, or just perfect hashing functions for
+that matter.
+
