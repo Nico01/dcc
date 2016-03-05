@@ -26,13 +26,9 @@
 	seem to match so far in version 4 and 5.0 */
 
 #include <stdio.h>
-#include <io.h>
 #include <stdlib.h>
-#include <malloc.h>
-#include <memory.h>
 #include <string.h>
 
-/*#include "dcc.h"*/
 #include "perfhlib.h"		/* Symbol table prototypes */
 
 
@@ -73,8 +69,8 @@ byte *leData;				/* Pointer to 64K of alloc'd data. Some .lib files
 								(LEDATA), so you need to keep the data here */
 word maxLeData;				/* How much data we have in there */
 	
-void
-main(int argc, char *argv[])
+
+int main(int argc, char *argv[])
 {
 	int s;
 
@@ -423,7 +419,7 @@ savePos(void)
 		exit(1);
 	}
 	fseek(f, 0, SEEK_CUR);		/* Needed due to bug in MS fread()! */
-	filePosn[posIdx++] = _lseek(fileno(f), 0, SEEK_CUR);
+	filePosn[posIdx++] = fseek(f, 0, SEEK_CUR);
 }
 
 void

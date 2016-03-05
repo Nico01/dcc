@@ -17,13 +17,13 @@
  *
  */
 
-/*
 /* Quick program to see if a pattern is in a sig file. Pattern is supplied
 	in a small .bin or .com style file */
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
+#include <string.h>
+
 #include "perfhlib.h"
 
 /* statics */
@@ -58,8 +58,7 @@ void fixWildCards(char *buf);		/* In fixwild.c */
 void pattSearch(void);
 
 
-void
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	word w, len;
 	int h, i;

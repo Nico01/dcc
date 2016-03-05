@@ -26,8 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <io.h>
-#include <malloc.h>     /* For debugging */
+
 #include "parsehdr.h"
 
 dword	userval;
@@ -1493,9 +1492,9 @@ main(int argc, char *argv[])
 
         printf("Processing %s...\n", fileName);
 
-	    fSize = _lseek(_fileno(f), 0, SEEK_END);
+	    fSize = fseek(f, 0, SEEK_END);
 	    fseek(f, 0, SEEK_SET);
-        ndata = (int) min(fSize, FBUF_SIZE);
+        ndata = (int) MIN(fSize, FBUF_SIZE);
         if (buf) free(buf);
 	    buf = (char *)malloc(ndata);
 	    if (buf == 0)

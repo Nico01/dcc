@@ -43,6 +43,8 @@ typedef unsigned char boolT;    /* 8 bits 	*/
 void	phError(char *errmsg);
 void	phWarning(char *errmsg);
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+
 #define	ERR(msg)		phError(msg)
 #ifdef DEBUG
 #define	DBG(str) printf(str);

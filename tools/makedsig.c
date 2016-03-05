@@ -26,12 +26,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h>
-#include <memory.h>
 #include <string.h>
 
-/*#include "dcc.h"*/
 #include "perfhlib.h"		/* Symbol table prototypes */
+
+
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
 
 
 /* Symbol table constnts */
@@ -71,8 +72,8 @@ byte *leData;				/* Pointer to 64K of alloc'd data. Some .lib files
 								(LEDATA), so you need to keep the data here */
 word maxLeData;				/* How much data we have in there */
 	
-void
-main(int argc, char *argv[])
+
+int main(int argc, char *argv[])
 {
 	int s;
 
@@ -367,7 +368,7 @@ readSyms(void)
 						{
 							p++; 			/* Yes, remove it*/
 						}
-						i = min(SYMLEN-1, strlen(p));
+						i = MIN(SYMLEN-1, strlen(p));
 						memcpy(keys[count].name, p, i);
 						keys[count].name[i] = '\0';
 						keys[count].offset = w;
@@ -400,7 +401,7 @@ readSyms(void)
 					exit(2);
 				}
 				offset += len-1;
-				maxLeData = max(maxLeData, w+len-1);
+				maxLeData = MAX(maxLeData, w+len-1);
 
 			 	readByte();				/* Checksum */
 				break;

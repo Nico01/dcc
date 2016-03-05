@@ -21,8 +21,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
 #include <string.h>
+
 #include "perfhlib.h"
 
 /* statics */
@@ -55,8 +55,8 @@ typedef struct HT_tag
 
 HT  ht;                 /* One hash table entry */
 
-void
-main(int argc, char *argv[])
+
+int main(int argc, char *argv[])
 {
 	word w, len;
 	int i;
@@ -188,7 +188,7 @@ main(int argc, char *argv[])
             printf("Could not read pattern %d from %s\n", i, argv[1]);
             exit(7);
         }
-        if (stricmp(ht.htSym, argv[2]) == 0)
+        if (strcasecmp(ht.htSym, argv[2]) == 0)
         {
             /* Found it! */
             break;
