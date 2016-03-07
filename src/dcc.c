@@ -90,7 +90,7 @@ static void help() {
         "\n    -a, --asm1           Assembler output before re-ordering of input code"
         "\n    -A, --asm2           Assembler output after re-ordering of input code"
         "\n    -f, --file           Filename of the executable"
-        "\n"
+        "\n\n"
     );
     exit(EXIT_FAILURE);
 }
