@@ -37,7 +37,7 @@ static char *errorMessage[] = {
     "Error while reading %s\n",                                     /* CANNOT_READ          */
     "malloc of %ld bytes failed\n",                                 /* MALLOC_FAILED        */
     "Don't understand new EXE format\n",                            /* NEWEXE_FORMAT        */
-    "Failed to find a BB for jump to %ld in proc %s\n",             /* NO_BB		        */
+    "Failed to find a BB for jump to %ld in proc %s\n",             /* NO_BB                */
     "Basic Block is a synthetic jump\n",                            /* INVALID_SYNTHETIC_BB */
     "Failed to find a BB for interval\n",                           /* INVALID_INT_BB       */
     "Instruction at location %06lX goes beyond loaded image\n",     /* IP_OUT_OF_RANGE      */
@@ -58,7 +58,7 @@ void fatalError(error_msg id, ...)
     va_start(args, id);
 
     if (id == USAGE)
-        fprintf(stderr, "Usage: %s [-a1a2mpsvV][-o asmfile] DOS_executable\n", progname);
+        fprintf(stderr, "Usage: %s [-hvVsmiaA][-f DOS_executable]\n", progname);
     else {
         fprintf(stderr, "%s: ", progname);
         vfprintf(stderr, errorMessage[id - 1], args);
