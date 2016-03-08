@@ -24,22 +24,15 @@
  ****************************************************************************/
 
 #include "dcc.h"
-#include <string.h>
-#ifdef  __BORLAND__
-#include <alloc.h>
-#else
-#include <malloc.h>
-#endif
-
-#ifdef __MSDOS__
 #include <stdio.h>
-#endif
+#include <string.h>
+#include <stdlib.h>
 
 
 static void     FollowCtrl (PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate);
-static boolT    process_JMP (PICODE pIcode, PPROC pProc, PSTATE pstate,
+static bool    process_JMP (PICODE pIcode, PPROC pProc, PSTATE pstate,
                              PCALL_GRAPH pcallGraph);
-static boolT    process_CALL(PICODE pIcode, PPROC pProc, PCALL_GRAPH pcallGraph,
+static bool    process_CALL(PICODE pIcode, PPROC pProc, PCALL_GRAPH pcallGraph,
                              PSTATE pstate);
 static void     process_operands(PICODE pIcode, PPROC pProc, PSTATE pstate,
                                  Int ix);
@@ -144,7 +137,7 @@ static void FollowCtrl (PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
     PSYM    psym;
     dword   offset;
     Int     err;
-    boolT   done = FALSE;
+    bool   done = false;
     Int     lab;
 
     while (! done && ! (err = scan(pstate->IP, &Icode)))
@@ -255,7 +248,7 @@ static void FollowCtrl (PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
         {   STATE   StCopy;
             Int     ip      = pProc->Icode.numIcode - 1;    /* curr icode idx */
             PICODE  prev    = &pProc->Icode.icode[ip - 1];
-            boolT   fBranch = FALSE;
+            bool   fBranch = false;
 
             pstate->JCond.regi = 0;
 
@@ -301,7 +294,7 @@ static void FollowCtrl (PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
                                         /* Fall through */
         case iIRET:
             pProc->flg &= ~TERMINATES;
-            done = TRUE;
+            done = true;
             break;
 
         case iINT:
@@ -391,7 +384,7 @@ static void FollowCtrl (PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
 }
 
 
-static boolT process_JMP (PICODE pIcode, PPROC pProc, PSTATE pstate, 
+static bool process_JMP (PICODE pIcode, PPROC pProc, PSTATE pstate, 
                           PCALL_GRAPH pcallGraph)
 /* process_JMP - Handles JMPs, returns TRUE if we should end recursion  */
 {   static byte i2r[4] = {rSI, rDI, rBP, rBX};
@@ -490,7 +483,7 @@ static boolT process_JMP (PICODE pIcode, PPROC pProc, PSTATE pstate,
                 pProc->Icode.icode[ip].ic.ll.flg |= CASE;
                 *psw++ = pProc->Icode.icode[ip].ic.ll.label;
             }
-            return TRUE;
+            return true;
         }
     }
 
@@ -499,11 +492,11 @@ static boolT process_JMP (PICODE pIcode, PPROC pProc, PSTATE pstate,
     pProc->flg |= PROC_IJMP;
     pProc->flg &= ~TERMINATES;
     interactDis(pProc, pProc->Icode.numIcode-1);
-    return TRUE;
+    return true;
 }
 
 
-static boolT process_CALL (PICODE pIcode, PPROC pProc, PCALL_GRAPH pcallGraph,
+static bool process_CALL (PICODE pIcode, PPROC pProc, PCALL_GRAPH pcallGraph,
                            PSTATE pstate)
 /* Process procedure call. 
  * Note: We assume that CALL's will return unless there is good evidence to 
@@ -517,10 +510,10 @@ static boolT process_CALL (PICODE pIcode, PPROC pProc, PCALL_GRAPH pcallGraph,
   Int   ip = pProc->Icode.numIcode - 1;
   STATE localState;     /* Local copy of the machine state */
   dword off;
-  boolT indirect;
+  bool indirect;
 
 	/* For Indirect Calls, find the function address */
-	indirect = FALSE;
+	indirect = false;
 	if (! (pIcode->ic.ll.flg & I)) 
 	{
 		/* Offset into program image is seg:off of read input */
@@ -535,7 +528,7 @@ static boolT process_CALL (PICODE pIcode, PPROC pProc, PCALL_GRAPH pcallGraph,
 			pIcode->ic.ll.immed.op = LH(&prog.Image[off]) + 
 									 (pProc->state.r[rCS] << 4); 
 		pIcode->ic.ll.flg |= I;
-		indirect = TRUE;
+		indirect = true;
 	}
 
 	/* Process CALL.  Function address is located in pIcode->ic.ll.immed.op */
@@ -561,7 +554,7 @@ static boolT process_CALL (PICODE pIcode, PPROC pProc, PCALL_GRAPH pcallGraph,
                 /* A library function. No need to do any more to it */
                 insertCallGraph (pcallGraph, pProc, p);
                 pProc->Icode.icode[ip].ic.ll.immed.proc.proc = p;
-                return FALSE;
+                return false;
             }
 
 			if (indirect)
@@ -600,7 +593,7 @@ static boolT process_CALL (PICODE pIcode, PPROC pProc, PCALL_GRAPH pcallGraph,
 
         pProc->Icode.icode[ip].ic.ll.immed.proc.proc = p;   /* ^ target proc */
         /* return ((p->flg & TERMINATES) != 0); */
-		return (FALSE);
+		return false;
     }
 }
 
@@ -785,20 +778,20 @@ void setState(PSTATE pstate, word reg, int16 value)
 {
     value &= 0xFFFF;
     pstate->r[reg] = value;
-    pstate->f[reg] = TRUE;
+    pstate->f[reg] = true;
     switch (reg) {
     case rAX: case rCX: case rDX: case rBX:
         pstate->r[reg + rAL - rAX] = value & 0xFF;
-        pstate->f[reg + rAL - rAX] = TRUE;
+        pstate->f[reg + rAL - rAX] = true;
         pstate->r[reg + rAH - rAX] = (value >> 8) & 0xFF;
-        pstate->f[reg + rAH - rAX] = TRUE;
+        pstate->f[reg + rAH - rAX] = true;
         break;
 
     case rAL: case rCL: case rDL: case rBL:
         if (pstate->f[reg - rAL + rAH]) {
             pstate->r[reg - rAL + rAX] =
                 (pstate->r[reg - rAL + rAH] << 8) + (value & 0xFF);
-            pstate->f[reg - rAL + rAX] = TRUE;
+            pstate->f[reg - rAL + rAX] = true;
         }
         break;
 
@@ -806,14 +799,14 @@ void setState(PSTATE pstate, word reg, int16 value)
         if (pstate->f[reg - rAH + rAL]) {
             pstate->r[reg - rAH + rAX] =
                 pstate->r[reg - rAH + rAL] + ((value & 0xFF) << 8);
-            pstate->f[reg - rAH + rAX] = TRUE;
+            pstate->f[reg - rAH + rAX] = true;
         }
         break;
     }
 }
 
 
-boolT labelSrch(PICODE pIcode, Int numIp, dword target, Int *pIndex)
+bool labelSrch(PICODE pIcode, Int numIp, dword target, Int *pIndex)
 /* labelSrchRepl - Searches Icode for instruction with label = target, and
     replaces *pIndex with an icode index */
 {
@@ -824,10 +817,10 @@ boolT labelSrch(PICODE pIcode, Int numIp, dword target, Int *pIndex)
         if (pIcode[i].ic.ll.label == target)
         {
             *pIndex = i;
-            return TRUE;
+            return true;
         }
     }
-    return FALSE;
+    return false;
 }
 
 
@@ -1167,6 +1160,6 @@ static void process_operands(PICODE pIcode, PPROC pProc, PSTATE pstate, Int ix)
 
     for (i = rSP; i <= rBH; i++)        /* Kill all defined registers */
         if (pIcode->ic.ll.flagDU.d & (1 << i))
-            pstate->f[i] = FALSE;
+            pstate->f[i] = false;
 }
 
