@@ -149,7 +149,7 @@ static void displayLoadInfo(void)
         printf("Minimum allocation   = %04X paras\n", LH(&header.minAlloc));
         printf("Maximum allocation   = %04X paras\n", LH(&header.maxAlloc));
     }
-    printf("Load image size      = %04X\n", prog.cbImage - sizeof(PSP));
+    printf("Load image size      = %04lX\n", prog.cbImage - sizeof(PSP));
     printf("Initial SS:SP        = %04X:%04X\n", prog.initSS, prog.initSP);
     printf("Initial CS:IP        = %04X:%04X\n", prog.initCS, prog.initIP);
 
