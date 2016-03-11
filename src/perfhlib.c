@@ -26,27 +26,27 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Private data structures */
+// Private data structures
+static int NumEntry; // Number of entries in the hash table (# keys)
+static int EntryLen; // Size (bytes) of each entry (size of keys)
+static int SetSize;  // Size of the char set
+static char SetMin;  // First char in the set
+static int NumVert;  // c times NumEntry
 
-static int NumEntry; /* Number of entries in the hash table (# keys) */
-static int EntryLen; /* Size (bytes) of each entry (size of keys) */
-static int SetSize;  /* Size of the char set */
-static char SetMin;  /* First char in the set */
-static int NumVert;  /* c times NumEntry */
+static uint16_t *T1base, *T2base; // Pointers to start of T1, T2
+static uint16_t *T1, *T2;         // Pointers to T1[i], T2[i]
 
-static uint16_t *T1base, *T2base; /* Pointers to start of T1, T2 */
-static uint16_t *T1, *T2;         /* Pointers to T1[i], T2[i] */
+static int *graphNode;  // The array of edges
+static int *graphNext;  // Linked list of edges
+static int *graphFirst; // First edge at a vertex
 
-static int *graphNode;  /* The array of edges */
-static int *graphNext;  /* Linked list of edges */
-static int *graphFirst; /* First edge at a vertex */
+static int16_t *g; // g[]
 
-static int16_t *g; /* g[] */
+static int numEdges;  // An edge counter
+static bool *visited; // Array of bools: whether visited
 
-static int numEdges;  /* An edge counter */
-static bool *visited; /* Array of bools: whether visited */
 
-/* Private prototypes */
+// Private prototypes
 static void initGraph(void);
 static void addToGraph(int e, int v1, int v2);
 static bool isCycle(void);
@@ -63,7 +63,7 @@ void hashParams(int _NumEntry, int _EntryLen, int _SetSize, char _SetMin, int _N
     SetMin = _SetMin;
     NumVert = _NumVert;
 
-    /* Allocate the variable sized tables etc */
+    // Allocate the variable sized tables etc
     if ((T1base = malloc(EntryLen * SetSize * sizeof(uint16_t))) == NULL)
         goto BadAlloc;
 
@@ -95,19 +95,13 @@ BadAlloc:
 
 void hashCleanup(void)
 {
-    /* Free the storage for variable sized tables etc */
-    if (T1base)
-        free(T1base);
-    if (T2base)
-        free(T2base);
-    if (graphNode)
-        free(graphNode);
-    if (graphNext)
-        free(graphNext);
-    if (graphFirst)
-        free(graphFirst);
-    if (g)
-        free(g);
+    // Free the storage for variable sized tables etc
+    if (T1base) free(T1base);
+    if (T2base) free(T2base);
+    if (graphNode) free(graphNode);
+    if (graphNext) free(graphNext);
+    if (graphFirst) free(graphFirst);
+    if (g) free(g);
 }
 
 void map(void)
@@ -121,7 +115,7 @@ void map(void)
         initGraph();
         cycle = false;
 
-        /* Randomly generate T1 and T2 */
+        // Randomly generate T1 and T2
         for (int i = 0; i < SetSize * EntryLen; i++) {
             T1base[i] = rand() % NumVert;
             T2base[i] = rand() % NumVert;
@@ -142,8 +136,7 @@ void map(void)
             f1 %= (uint16_t)NumVert;
             f2 %= (uint16_t)NumVert;
 
-            if (f1 == f2) {
-                /* A self loop. Reject! */
+            if (f1 == f2) { // A self loop. Reject!
                 printf("Self loop on vertex %d!\n", f1);
                 cycle = true;
                 break;
@@ -151,7 +144,7 @@ void map(void)
             addToGraph(numEdges++, f1, f2);
         }
 
-        if (cycle || (cycle = isCycle())) /* OK - is there a cycle? */
+        if (cycle || (cycle = isCycle())) // OK - is there a cycle?
             printf("Iteration %d\n", ++c);
         else
             break;
@@ -178,14 +171,14 @@ static void addToGraph(int e, int v1, int v2)
 {
     e++;
     v1++;
-    v2++; /* So much more convenient */
+    v2++; // So much more convenient
 
-    graphNode[NumEntry + e] = v2; /* Insert the edge information */
+    graphNode[NumEntry + e] = v2; // Insert the edge information
     graphNode[NumEntry - e] = v1;
 
-    graphNext[NumEntry + e] = graphFirst[v1]; /* Insert v1 to list of alphas */
+    graphNext[NumEntry + e] = graphFirst[v1]; // Insert v1 to list of alphas
     graphFirst[v1] = e;
-    graphNext[NumEntry - e] = graphFirst[v2]; /* Insert v2 to list of omegas */
+    graphNext[NumEntry - e] = graphFirst[v2]; // Insert v2 to list of omegas
     graphFirst[v2] = -e;
 }
 
@@ -198,18 +191,16 @@ bool DFS(int parentE, int v)
 
     visited[v] = true;
 
-    /* For each e incident with v .. */
+    // For each e incident with v ..
     for (e = graphFirst[v]; e; e = graphNext[NumEntry + e]) {
         uint8_t *key1;
 
         getKey(abs(e) - 1, &key1);
-        if (*(long *)key1 == 0) {
-            /* A deleted key. Just ignore it */
+        if (*(long *)key1 == 0) // A deleted key. Just ignore it
             continue;
-        }
+
         w = graphNode[NumEntry + e];
-        if (visited[w]) {
-            /* Did we just come through this edge? If so, ignore it. */
+        if (visited[w]) { // Did we just come through this edge? If so, ignore it.
             if (abs(e) != abs(parentE)) {
                 /* There is a cycle in the graph. There is some subtle code here
                     to work around the distinct possibility that there may be
@@ -243,10 +234,9 @@ bool DFS(int parentE, int v)
                         printf(" & ");
                         dispKey(abs(parentE) - 1);
                         printf(")\n");
-                        /*                      *(long *)key1 = 0;      /* Wipe the key */
+                        // *(long *)key1 = 0;      /* Wipe the key */
                         memset(key1, 0, EntryLen);
-                    } else {
-                        /* A genuine (unit) cycle. */
+                    } else { // A genuine (unit) cycle.
                         printf("There is a unit cycle involving vertex %d and edge %d\n", v, e);
                         return true;
                     }
@@ -258,13 +248,9 @@ bool DFS(int parentE, int v)
                     return true;
                 }
             }
-        } else /* Not yet seen. Traverse it */
-        {
-            if (DFS(e, w)) {
-                /* Cycle found deeper down. Exit */
+        } else // Not yet seen. Traverse it
+            if (DFS(e, w)) // Cycle found deeper down. Exit
                 return true;
-            }
-        }
     }
     return false;
 }
@@ -289,14 +275,14 @@ void traverse(int u)
     int w, e;
 
     visited[u] = true;
-    /* Find w, the neighbours of u, by searching the edges e associated with u */
+    // Find w, the neighbours of u, by searching the edges e associated with u
     e = graphFirst[1 + u];
     while (e) {
         w = graphNode[NumEntry + e] - 1;
         if (!visited[w]) {
             g[w] = (abs(e) - 1 - g[u]) % NumEntry;
             if (g[w] < 0)
-                g[w] += NumEntry; /* Keep these positive */
+                g[w] += NumEntry; // Keep these positive
             traverse(w);
         }
         e = graphNext[NumEntry + e];
@@ -306,7 +292,7 @@ void traverse(int u)
 void assign(void)
 {
     for (int v = 0; v < NumVert; v++) {
-        g[v] = 0; /* g is sparse; leave the gaps 0 */
+        g[v] = 0; // g is sparse; leave the gaps 0
         visited[v] = false;
     }
 

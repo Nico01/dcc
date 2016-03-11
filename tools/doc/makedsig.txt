@@ -63,7 +63,7 @@ Here are the current vendors:
 Vendor           Vendor letter
 Microsoft C/C++		m
 Borland C/C++		b
-Logitech (Modula)       l
+Logitech (Modula)   l
 Turbo Pascal		t
 
 Here are the model codes:
@@ -71,7 +71,7 @@ small/tiny		s
 medium			m
 compact			c
 large			l
-Turbo Pascal		p
+Turbo Pascal	p
 
 The version codes are fairly self explanatory:
 Microsoft C 5.1		5
