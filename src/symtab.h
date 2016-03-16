@@ -1,6 +1,3 @@
-#ifndef SYMTAB_H
-#define SYMTAB_H
-
 /*
  * Copyright (C) 1993, Queensland University of Technology
  *
@@ -21,44 +18,45 @@
  */
 
 /*
-   Symbol table prototypes
-   (C) Mike van Emmerik
+ * Symbol table prototypes
+ * (C) Mike van Emmerik
 */
 
+/* * * * * * * * * * * * * * * * * */
+/* Symbol table structs and protos */
+/* * * * * * * * * * * * * * * * * */
 
-// Symbol table structs and protos
-
-typedef struct {
-    char *pSymName;    // Ptr to symbolic name or comment
-    uint32_t symOff;   // Symbol image offset
-    PPROC symProc;     // Procedure pointer
-    uint16_t preHash;  // Hash value before the modulo
-    uint16_t postHash; // Hash value after the modulo
-    uint16_t nextOvf;  // Next entry this hash bucket, or -1
-    uint16_t prevOvf;  // Back link in Ovf chain
+typedef struct
+{
+    char    *pSymName;              /* Ptr to symbolic name or comment */
+    dword   symOff;                 /* Symbol image offset */
+    PPROC   symProc;                /* Procedure pointer */
+    word    preHash;                /* Hash value before the modulo */
+    word    postHash;               /* Hash value after the modulo */
+    word    nextOvf;                /* Next entry this hash bucket, or -1 */
+    word    prevOvf;                /* Back link in Ovf chain */
 } SYMTABLE;
 
-// The table types
-enum _tableType {
-    Label = 0,      // The label table
-    Comment,        // The comment table
-    NUM_TABLE_TYPES // Number of entries: must be last
-};
+enum _tableType                     /* The table types */
+{
+    Label=0,                        /* The label table */
+    Comment,                        /* The comment table */
+    NUM_TABLE_TYPES                 /* Number of entries: must be last */
+};              
 
-typedef enum _tableType tableType; // For convenience
+typedef enum _tableType tableType;  /* For convenience */
 
-void createSymTables(void);
-void destroySymTables(void);
-void enterSym(char *symName, uint32_t symOff, PPROC symProc, bool bSymToo);
-bool readSym(char *symName, uint32_t *pSymOff, PPROC *pSymProc);
-bool readVal(char *symName, uint32_t symOff, PPROC symProc);
-void deleteSym(char *symName);
-void deleteVal(uint32_t symOff, PPROC symProc, bool bSymToo);
-bool findVal(uint32_t symOff, PPROC symProc, uint16_t *pIndex);
-uint16_t symHash(char *name, uint16_t *pre);
-uint16_t valHash(uint32_t off, PPROC proc, uint16_t *pre);
-void selectTable(tableType); // Select a particular table
-char *addStrTbl(char *pStr); // Add string to string table
+void    createSymTables(void);
+void    destroySymTables(void);
+void    enterSym(char *symName, dword   symOff, PPROC   symProc, boolT bSymToo);
+boolT   readSym (char *symName, dword *pSymOff, PPROC *pSymProc);
+boolT   readVal (char *symName, dword   symOff, PPROC   symProc);
+void    deleteSym(char *symName);
+void    deleteVal(dword symOff, PPROC symProc, boolT bSymToo);
+boolT   findVal(dword symOff, PPROC symProc, word *pIndex);
+word    symHash(char *name, word *pre);
+word    valHash(dword off, PPROC proc, word *pre);
+void    selectTable(tableType);     /* Select a particular table */
 
-#endif // SYMTAB_H
+char   *addStrTbl(char *pStr);      /* Add string to string table */
 

@@ -23,15 +23,17 @@
  ****************************************************************************/
 
 #include "dcc.h"
-#include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
+#include <malloc.h>
+#ifdef __MSDOS__
+#include <stdio.h>
+#endif
 
 
 /*****************************************************************************
  * JmpInst - Returns TRUE if opcode is a conditional or unconditional jump
  ****************************************************************************/
-bool JmpInst(llIcode opcode)
+boolT JmpInst(llIcode opcode)
 {
     switch (opcode) {
         case iJMP:  case iJMPF: case iJCXZ:
@@ -40,9 +42,9 @@ bool JmpInst(llIcode opcode)
         case iJL:   case iJLE:  case iJGE:  case iJG: 
         case iJE:   case iJNE:  case iJS:   case iJNS:
         case iJO:   case iJNO:  case iJP:   case iJNP:
-            return true;
+            return TRUE;
     }
-    return false;
+    return FALSE;
 }
 
 
@@ -338,12 +340,12 @@ static void idiom4 (PICODE pIcode, PICODE pEnd, PPROC pProc)
  *      Found in Borland Turbo C code.
  *      Commonly used idiom for long addition.
  ****************************************************************************/
-static bool idiom5 (PICODE pIcode, PICODE pEnd)
+static boolT idiom5 (PICODE pIcode, PICODE pEnd)
 {
     if (pIcode < pEnd)
         if ((pIcode+1)->ic.ll.opcode == iADC)
-            return true;
-    return false;
+            return (TRUE);
+    return (FALSE);
 }
 
 
@@ -357,12 +359,12 @@ static bool idiom5 (PICODE pIcode, PICODE pEnd)
  *      Found in Borland Turbo C code.
  *      Commonly used idiom for long substraction.
  ****************************************************************************/
-static bool idiom6 (PICODE pIcode, PICODE pEnd)
+static boolT idiom6 (PICODE pIcode, PICODE pEnd)
 {
     if (pIcode < pEnd)
         if ((pIcode+1)->ic.ll.opcode == iSBB)
-            return true;
-    return false;
+            return (TRUE);
+    return (FALSE);
 }
 
 
@@ -373,7 +375,7 @@ static bool idiom6 (PICODE pIcode, PICODE pEnd)
  *          =>  ax = 0
  *      Found in Borland Turbo C and Microsoft C code.
  ****************************************************************************/
-static bool idiom7 (PICODE pIcode)
+static boolT idiom7 (PICODE pIcode)
 { PMEM dst, src;
 
     dst = &pIcode->ic.ll.dst;
@@ -381,21 +383,21 @@ static bool idiom7 (PICODE pIcode)
     if (dst->regi == 0)                 /* global variable */
     {
         if ((dst->segValue == src->segValue) && (dst->off == src->off))
-            return true;
+            return (TRUE);
     }
     else if (dst->regi < INDEXBASE)     /* register */
     {
         if (dst->regi == src->regi)
-            return true;
+            return (TRUE);
     }
     else if ((dst->off) && (dst->seg == rSS) && (dst->regi == INDEXBASE + 6))
                                         /* offset from BP */
     {
         if ((dst->off == src->off) && (dst->seg == src->seg) &&
             (dst->regi == src->regi))
-            return true;
+            return (TRUE);
     }
-    return false;
+    return (FALSE);
 }
 
 
@@ -412,7 +414,7 @@ static bool idiom7 (PICODE pIcode)
  *				cx:bx
  *		Found in Borland Turbo C code.
  ****************************************************************************/
-static bool idiom21 (PICODE picode, PICODE pend)
+static boolT idiom21 (PICODE picode, PICODE pend)
 { PMEM dst, src;
 
     dst = &picode->ic.ll.dst;
@@ -423,12 +425,12 @@ static bool idiom21 (PICODE picode, PICODE pend)
 			(dst->regi < INDEXBASE))
 		{
 			if ((dst->regi == rDX) && ((picode+1)->ic.ll.dst.regi == rAX))
-				return true;
+				return (TRUE);
 			if ((dst->regi == rCX) && ((picode+1)->ic.ll.dst.regi == rBX))
-				return true;
+				return (TRUE);
 		}
 	}
-	return false;
+	return (FALSE);
 }
 
 
@@ -441,7 +443,7 @@ static bool idiom21 (PICODE picode, PICODE pend)
  *          =>  dx:ax = dx:ax >> 1      (dx:ax are signed long)
  *      Found in Microsoft C code for long signed variable shift right.
  ****************************************************************************/
-static bool idiom8 (PICODE pIcode, PICODE pEnd)
+static boolT idiom8 (PICODE pIcode, PICODE pEnd)
 {
     if (pIcode < pEnd)
     {
@@ -449,9 +451,9 @@ static bool idiom8 (PICODE pIcode, PICODE pEnd)
             if (((pIcode+1)->ic.ll.opcode == iRCR) &&   
                 (((pIcode+1)->ic.ll.flg & I) == I) && 
                 ((pIcode+1)->ic.ll.immed.op == 1))
-                return true;
+                return (TRUE);
     }
-    return false;
+    return (FALSE);
 }
 
 
@@ -505,7 +507,7 @@ static Int idiom15 (PICODE picode, PICODE pend)
  *          =>  dx:ax = dx:ax << 1
  *      Found in Borland Turbo C code for long variable shift left.
  ****************************************************************************/
-static bool idiom12 (PICODE pIcode, PICODE pEnd)
+static boolT idiom12 (PICODE pIcode, PICODE pEnd)
 {
     if (pIcode < pEnd)
     {
@@ -513,9 +515,9 @@ static bool idiom12 (PICODE pIcode, PICODE pEnd)
             if (((pIcode+1)->ic.ll.opcode == iRCL) &&   
                 (((pIcode+1)->ic.ll.flg & I) == I) && 
                 ((pIcode+1)->ic.ll.immed.op == 1))
-                return true;
+                return (TRUE);
     }
-    return false;
+    return (FALSE);
 }
 
 
@@ -528,7 +530,7 @@ static bool idiom12 (PICODE pIcode, PICODE pEnd)
  *          =>  dx:ax = dx:ax >> 1   (dx:ax are unsigned long)
  *      Found in Microsoft C code for long unsigned variable shift right.
  ****************************************************************************/
-static bool idiom9 (PICODE pIcode, PICODE pEnd)
+static boolT idiom9 (PICODE pIcode, PICODE pEnd)
 {
     if (pIcode < pEnd)
     {
@@ -536,9 +538,9 @@ static bool idiom9 (PICODE pIcode, PICODE pEnd)
             if (((pIcode+1)->ic.ll.opcode == iRCR) &&   
                 (((pIcode+1)->ic.ll.flg & I) == I) && 
                 ((pIcode+1)->ic.ll.immed.op == 1))
-                return true;
+                return (TRUE);
     }
-    return false;
+    return (FALSE);
 }
 
 
@@ -555,7 +557,7 @@ static bool idiom9 (PICODE pIcode, PICODE pEnd)
  *			  because this is most likely a long conditional equality test.
  *      Found in Borland Turbo C.
  ****************************************************************************/
-static bool idiom10old (PICODE pIcode, PICODE pEnd)
+static boolT idiom10old (PICODE pIcode, PICODE pEnd)
 {
     if (pIcode < pEnd)
     {
@@ -569,13 +571,13 @@ static bool idiom10old (PICODE pIcode, PICODE pEnd)
 				if (((pIcode+1)->ic.ll.opcode == iJNE) &&
 					((pIcode+2)->ic.ll.opcode != iCMP) &&
 					((pIcode+3)->ic.ll.opcode != iJE))
-					return true;
+					return (TRUE);
 			}
 			else	/* at the end of the procedure */
             	if (((pIcode+1) < pEnd) && ((pIcode+1)->ic.ll.opcode == iJNE))
-                	return true;
+                	return (TRUE);
     }
-    return false;
+    return (FALSE);
 }
 
 
@@ -665,7 +667,7 @@ static byte idiom13 (PICODE picode, PICODE pend)
  *      Found in Borland Turbo C, used for division of unsigned integer 
  *      operands.
  ****************************************************************************/
-static bool idiom14 (PICODE picode, PICODE pend, byte *regL, byte *regH)
+static boolT idiom14 (PICODE picode, PICODE pend, byte *regL, byte *regH)
 {
     if (picode < pend)
     {
@@ -681,14 +683,14 @@ static bool idiom14 (PICODE picode, PICODE pend, byte *regL, byte *regH)
 				if (*regH == (picode+1)->ic.ll.src.regi)
 				{
 					if ((*regL == rAX) && (*regH == rDX))
-						return true;
+						return (TRUE);
 					if ((*regL == rBX) && (*regH == rCX))
-						return true;
+						return (TRUE);
 				}
             }
         }
     }
-    return false;
+    return (FALSE);
 }
 
 /*****************************************************************************
@@ -702,7 +704,7 @@ static bool idiom14 (PICODE picode, PICODE pend, byte *regL, byte *regH)
  *      => dx:ax = - dx:ax
  *      Found in Borland Turbo C.
  ****************************************************************************/
-static bool idiom11 (PICODE pIcode, PICODE pEnd)
+static boolT idiom11 (PICODE pIcode, PICODE pEnd)
 { condId type;          /* type of argument */
 
     if ((pIcode + 2) < pEnd)
@@ -719,21 +721,21 @@ static bool idiom11 (PICODE pIcode, PICODE pEnd)
                                         pIcode->ic.ll.dst.segValue) &&
                                         ((pIcode+2)->ic.ll.dst.off ==
                                         pIcode->ic.ll.dst.off))
-                                        return true;
+                                        return (TRUE);
                                     break;
                   case REGISTER:    if ((pIcode+2)->ic.ll.dst.regi ==
                                         pIcode->ic.ll.dst.regi)
-                                        return true;
+                                        return (TRUE);
                                     break;
                   case PARAM:
                   case LOCAL_VAR:   if ((pIcode+2)->ic.ll.dst.off ==
                                         pIcode->ic.ll.dst.off)
-                                        return true;
+                                        return (TRUE);
                                     break;
                 }
         }
     }
-    return false;
+    return (FALSE);
 }
 
 
@@ -749,7 +751,7 @@ static bool idiom11 (PICODE pIcode, PICODE pEnd)
  *			=> ax = !ax
  *		Found in Borland Turbo C when negating bitwise.
  ****************************************************************************/
-static bool idiom16 (PICODE picode, PICODE pend)
+static boolT idiom16 (PICODE picode, PICODE pend)
 { byte regi;
 
 	if ((picode+2) < pend)
@@ -763,10 +765,10 @@ static bool idiom16 (PICODE picode, PICODE pend)
 											((picode+1)->ic.ll.src.regi)) &&
 					((picode+1)->ic.ll.dst.regi == regi) &&
 					((picode+2)->ic.ll.dst.regi == regi))
-					return true;
+					return (TRUE);
 		}
 	}
-	return false;
+	return (FALSE);
 }
 
 
@@ -784,8 +786,8 @@ static bool idiom16 (PICODE picode, PICODE pend)
  *			=>  JCOND (si++ < 8)
  * 		Found in Borland Turbo C.  Intrinsic to C languages.
  ****************************************************************************/
-static bool idiom18 (PICODE picode, PICODE pend, PPROC pproc)
-{ bool type = 0;	/* type of variable: 1 = reg-var, 2 = local */
+static boolT idiom18 (PICODE picode, PICODE pend, PPROC pproc)
+{ boolT type = 0;	/* type of variable: 1 = reg-var, 2 = local */
   byte regi;		/* register of the MOV */
 
 	/* Get variable */
@@ -817,7 +819,7 @@ static bool idiom18 (PICODE picode, PICODE pend, PPROC pproc)
 					((picode+1)->ic.ll.dst.regi == regi) &&
 					(((picode+2)->ic.ll.opcode >= iJB) &&
 					 ((picode+2)->ic.ll.opcode < iJCXZ)))
-					return true;
+					return (TRUE);
 			}
 		}
 	}
@@ -834,11 +836,11 @@ static bool idiom18 (PICODE picode, PICODE pend, PPROC pproc)
 					((picode+1)->ic.ll.dst.regi == regi) &&
 					(((picode+2)->ic.ll.opcode >= iJB) && 
 					 ((picode+2)->ic.ll.opcode < iJCXZ)))
-					return true;
+					return (TRUE);
 			}
 		}
 	}
-	return false;
+	return (FALSE);
 }
 
 
@@ -853,7 +855,7 @@ static bool idiom18 (PICODE picode, PICODE pend, PPROC pproc)
  *			=> JCOND (++[bp+4] > 0)
  *		Found in Borland Turbo C.  Intrinsic to C language.
  ****************************************************************************/
-static bool idiom19 (PICODE picode, PICODE pend, PPROC pproc)
+static boolT idiom19 (PICODE picode, PICODE pend, PPROC pproc)
 {
 	if (picode->ic.ll.dst.regi == 0)	/* global variable */
 		/* not supported yet */ ;
@@ -863,17 +865,17 @@ static bool idiom19 (PICODE picode, PICODE pend, PPROC pproc)
 			((picode->ic.ll.dst.regi == rDI) && (pproc->flg & DI_REGVAR)))
 			if ((picode < pend) && ((picode+1)->ic.ll.opcode >= iJB) && 
 				((picode+1)->ic.ll.opcode < iJCXZ))
-				return true;
+				return (TRUE);
 	}
 	else if (picode->ic.ll.dst.off)		/* stack variable */
 	{
 		if ((picode < pend) && ((picode+1)->ic.ll.opcode >= iJB) && 
 			((picode+1)->ic.ll.opcode < iJCXZ))
-			return true;
+			return (TRUE);
 	}
 	else	/* indexed */
 		/* not supported yet */ ;
-	return false;
+	return (FALSE);
 }
 
 
@@ -892,8 +894,8 @@ static bool idiom19 (PICODE picode, PICODE pend, PPROC pproc)
  *			=> JCOND (++si < 2)
  *		Found in Turbo C.  Intrinsic to C language.
  ****************************************************************************/
-static bool idiom20 (PICODE picode, PICODE pend, PPROC pproc)
-{ bool type = 0;	/* type of variable: 1 = reg-var, 2 = local */
+static boolT idiom20 (PICODE picode, PICODE pend, PPROC pproc)
+{ boolT type = 0;	/* type of variable: 1 = reg-var, 2 = local */
   byte regi;		/* register of the MOV */
 
 	/* Get variable */
@@ -925,7 +927,7 @@ static bool idiom20 (PICODE picode, PICODE pend, PPROC pproc)
 					((picode+2)->ic.ll.dst.regi == regi) &&
 					(((picode+3)->ic.ll.opcode >= iJB) && 
 					 ((picode+3)->ic.ll.opcode < iJCXZ)))
-					return true;
+					return (TRUE);
 			}
 		}
 	}
@@ -942,11 +944,11 @@ static bool idiom20 (PICODE picode, PICODE pend, PPROC pproc)
 					((picode+2)->ic.ll.dst.regi == regi) &&
 					(((picode+3)->ic.ll.opcode >= iJB) && 
 					 ((picode+3)->ic.ll.opcode < iJCXZ)))
-					return true;
+					return (TRUE);
 			}
 		}
 	}
-	return false;
+	return (FALSE);
 }
 
 

@@ -1,5 +1,4 @@
-CC = clang
-CFLAGS += -Wall -ggdb3
+CFLAGS += -Wall
 LDFLAGS += -lncurses
 
 SOURCES  := $(wildcard *.c)

@@ -68,21 +68,21 @@ static void insertArc (PCALL_GRAPH pcallGraph, PPROC newProc)
 }
 
 
-bool insertCallGraph (PCALL_GRAPH pcallGraph, PPROC caller, PPROC callee)
+boolT insertCallGraph (PCALL_GRAPH pcallGraph, PPROC caller, PPROC callee)
 /* Inserts a (caller, callee) arc in the call graph tree. */
 { Int i;
 
     if (pcallGraph->proc == caller)
     {
         insertArc (pcallGraph, callee);
-        return true;
+        return (TRUE);
     }
     else
     {
         for (i = 0; i < pcallGraph->numOutEdges; i++)
             if (insertCallGraph (pcallGraph->outEdges[i], caller, callee))
-                return true;
-        return false;
+                return (TRUE);
+        return (FALSE);
     }
 }
 
@@ -118,7 +118,7 @@ void newRegArg (PPROC pproc, PICODE picode, PICODE ticode)
   PSTKFRAME ps, ts;
   ID *id;
   Int i, tidx;
-  bool regExist;
+  boolT regExist;
   condId type;
   PPROC tproc;
   byte regL, regH;		/* Registers involved in arguments */
@@ -148,7 +148,7 @@ void newRegArg (PPROC pproc, PICODE picode, PICODE ticode)
 	}
 
 	/* Check if register argument already on the formal argument list */
-	regExist = false;
+	regExist = FALSE;
 	for (i = 0; i < ts->csym; i++)
 	{
 		if (type == REGISTER)
@@ -156,7 +156,7 @@ void newRegArg (PPROC pproc, PICODE picode, PICODE ticode)
 			if ((ts->sym[i].regs != NULL) && 
 				(ts->sym[i].regs->expr.ident.idNode.regiIdx == tidx))
 			{
-				regExist = true;
+				regExist = TRUE;
 				i = ts->csym;
 			}
 		}
@@ -165,14 +165,14 @@ void newRegArg (PPROC pproc, PICODE picode, PICODE ticode)
 			if ((ts->sym[i].regs != NULL) && 
 				(ts->sym[i].regs->expr.ident.idNode.longIdx == tidx))
 			{
-				regExist = true;
+				regExist = TRUE;
 				i = ts->csym;
 			}
 		}
 	}
 
 	/* Do ts (formal arguments) */
-	if (regExist == false)
+	if (regExist == FALSE)
 	{
     	if (ts->csym == ts->alloc) 
     	{
@@ -253,7 +253,7 @@ void allocStkArgs (PICODE picode, Int num)
 }
 
 
-bool newStkArg (PICODE picode, COND_EXPR *exp, llIcode opcode, PPROC pproc)
+boolT newStkArg (PICODE picode, COND_EXPR *exp, llIcode opcode, PPROC pproc)
 /* Inserts the new expression (ie. the actual parameter) on the argument
  * list.
  * Returns: TRUE if it was a near call that made use of a segment register.
@@ -271,9 +271,9 @@ bool newStkArg (PICODE picode, COND_EXPR *exp, llIcode opcode, PPROC pproc)
 			regi =  pproc->localId.id[exp->expr.ident.idNode.regiIdx].id.regi;
 			if ((regi >= rES) && (regi <= rDS))
 				if (opcode == iCALLF)
-					return false;
+					return (FALSE);
 				else
-					return true;
+					return (TRUE);
 		}
 	}
 
@@ -287,7 +287,7 @@ bool newStkArg (PICODE picode, COND_EXPR *exp, llIcode opcode, PPROC pproc)
     ps->sym[ps->csym].actual = exp;
 	ps->csym++;
 	ps->numArgs++;
-	return false;
+	return (FALSE);
 }
 
 
@@ -407,10 +407,10 @@ void adjustForArgType (PSTKFRAME pstkFrame, Int numArg, hlType actType)
 					nsym = psym + 1;
 					sprintf (nsym->macro, "HI");
 					sprintf (psym->macro, "LO");
-					nsym->hasMacro = true;
-					psym->hasMacro = true;
+					nsym->hasMacro = TRUE;
+					psym->hasMacro = TRUE;
 					sprintf (nsym->name, "%s", psym->name);
-					nsym->invalid = true;
+					nsym->invalid = TRUE;
 					pstkFrame->numArgs--;
 				}
 				break;

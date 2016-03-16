@@ -48,7 +48,7 @@ typedef struct _EXP_STK {
 static EXP_STK *expStk = NULL;      /* local expression stack */
 
 
-static char *hexStr(Int i)
+static char *hexStr (Int i)
 /* Returns the integer i in C hexadecimal format */
 { static char buf[10];
 
@@ -77,7 +77,7 @@ void setRegDU (PICODE pIcode, byte regi, operDu du)
 }
 
 
-void copyDU(PICODE pIcode, PICODE duIcode, operDu du, operDu duDu)
+void copyDU (PICODE pIcode, PICODE duIcode, operDu du, operDu duDu)
 /* Copies the def, use, or def and use fields of duIcode into pIcode */
 {
     switch (du) {
@@ -644,7 +644,7 @@ char *walkCondExpr (COND_EXPR *exp, PPROC pProc, Int *numLoc)
 { int16 off;                /* temporal - for OTHER */
   ID *id;                   /* Pointer to local identifier table */
   char *o;                  /* Operand string pointer */
-  bool needBracket;        /* Determine whether parenthesis is needed */
+  boolT needBracket;        /* Determine whether parenthesis is needed */
   struct _bwGlb *bwGlb;     /* Ptr to bwGlb structure (global indexed var) */
   Int strLen;				/* Length of string */
   PSTKSYM psym;				/* Pointer to argument in the stack */
@@ -656,7 +656,7 @@ char *walkCondExpr (COND_EXPR *exp, PPROC pProc, Int *numLoc)
     if (exp == NULL)
         return (condExp);
 
-    needBracket = true;
+    needBracket = TRUE;
     switch (exp->type) {
       case BOOLEAN:     strcat (condExp, "(");
                         e = walkCondExpr(exp->expr.boolExpr.lhs, pProc, numLoc);
@@ -669,40 +669,40 @@ char *walkCondExpr (COND_EXPR *exp, PPROC pProc, Int *numLoc)
 
       case NEGATION:    if (exp->expr.unaryExp->type == IDENTIFIER)
                         {
-                            needBracket = false;
+                            needBracket = FALSE;
                             strcat (condExp, "!");
                         }
                         else
                             strcat (condExp, "! (");
                         e = walkCondExpr (exp->expr.unaryExp, pProc, numLoc);
 						strcat (condExp, e);
-                        if (needBracket == true)
+                        if (needBracket == TRUE)
                             strcat (condExp, ")");
                         break;
 
       case ADDRESSOF:   if (exp->expr.unaryExp->type == IDENTIFIER)
                         {
-                            needBracket = false;
+                            needBracket = FALSE;
                             strcat (condExp, "&");
                         }
                         else
                             strcat (condExp, "&(");
                         e = walkCondExpr (exp->expr.unaryExp, pProc, numLoc);
 						strcat (condExp, e);
-                        if (needBracket == true)
+                        if (needBracket == TRUE)
                             strcat (condExp, ")");
                         break;
 
       case DEREFERENCE: if (exp->expr.unaryExp->type == IDENTIFIER)
                         {
-                            needBracket = false;
+                            needBracket = FALSE;
                             strcat (condExp, "*");
                         }
                         else
                             strcat (condExp, "*(");
                         e = walkCondExpr (exp->expr.unaryExp, pProc, numLoc);
 						strcat (condExp, e);
-                        if (needBracket == true)
+                        if (needBracket == TRUE)
                             strcat (condExp, ")");
                         break;
 
@@ -876,14 +876,14 @@ void changeBoolCondExpOp (COND_EXPR *exp, condOp newOp)
 }
 
 
-bool insertSubTreeReg (COND_EXPR *exp, COND_EXPR **tree, byte regi,
+boolT insertSubTreeReg (COND_EXPR *exp, COND_EXPR **tree, byte regi,
                         LOCAL_ID *locsym)
 /* Inserts the expression exp into the tree at the location specified by the
  * register regi */
 { byte treeReg, regH;
 
     if (*tree == NULL)
-        return (false);
+        return (FALSE);
 
     switch ((*tree)->type) {
       case IDENTIFIER:  
@@ -893,40 +893,40 @@ bool insertSubTreeReg (COND_EXPR *exp, COND_EXPR **tree, byte regi,
             if (treeReg == regi)                        /* word reg */
             {
                 *tree = exp;
-                return true;
+                return (TRUE);
             }
             else if ((regi >= rAX) && (regi <= rBX))    /* word/byte reg */
             {
                 if ((treeReg == (regi + rAL-1)) || (treeReg == (regi + rAH-1)))
                 {
                     *tree = exp;
-                    return true;
+                    return (TRUE);
                 }
             }
 		}
-        return false;
+        return (FALSE);
 
       case BOOLEAN:     
             if (insertSubTreeReg (exp, &(*tree)->expr.boolExpr.lhs, regi,
                                   locsym))
-                return true;
+                return (TRUE);
             if (insertSubTreeReg (exp, &(*tree)->expr.boolExpr.rhs, regi,
                                   locsym))
-                return true;
-            return false;
+                return (TRUE);
+            return (FALSE);
 
       case NEGATION:
       case ADDRESSOF:
       case DEREFERENCE: 
             if (insertSubTreeReg(exp, &(*tree)->expr.unaryExp,regi, locsym))
-                return true;
-            return false;
+                return (TRUE);
+            return (FALSE);
     }
 
 }
 
 
-bool insertSubTreeLongReg (COND_EXPR *exp, COND_EXPR **tree, Int longIdx)
+boolT insertSubTreeLongReg (COND_EXPR *exp, COND_EXPR **tree, Int longIdx)
 /* Inserts the expression exp into the tree at the location specified by the
  * long register index longIdx*/
 {
@@ -934,24 +934,24 @@ bool insertSubTreeLongReg (COND_EXPR *exp, COND_EXPR **tree, Int longIdx)
       case IDENTIFIER:  if ((*tree)->expr.ident.idNode.longIdx == longIdx)
                         {
                             *tree = exp;
-                            return true;
+                            return (TRUE);
                         }
-                        return false;
+                        return (FALSE);
                         
       case BOOLEAN:     if (insertSubTreeLongReg (exp, 
                                     &(*tree)->expr.boolExpr.lhs, longIdx))
-                            return true;
+                            return (TRUE);
                         if (insertSubTreeLongReg (exp, 
                                     &(*tree)->expr.boolExpr.rhs, longIdx))
-                            return true;
-                        return false;
+                            return (TRUE);
+                        return (FALSE);
                         
       case NEGATION:
       case ADDRESSOF:
       case DEREFERENCE: if (insertSubTreeLongReg (exp, 
                                         &(*tree)->expr.unaryExp, longIdx))
-                            return true;
-                        return false;
+                            return (TRUE);
+                        return (FALSE);
     }
 
 }
@@ -1036,10 +1036,10 @@ Int numElemExpStk()
 	return (num);
 }
 
-bool emptyExpStk()
+boolT emptyExpStk()
 /* Returns whether the expression stack is empty or not */
 {
 	if (expStk == NULL)
-		return true;
-	return false;
+		return (TRUE);
+	return (FALSE);
 }

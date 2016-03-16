@@ -20,9 +20,10 @@
 /* Quick program to read the output from makedsig */
 
 #include <stdio.h>
+#include <io.h>
 #include <stdlib.h>
+#include <memory.h>
 #include <string.h>
-
 #include "perfhlib.h"
 
 /* statics */
@@ -43,8 +44,8 @@ void cleanup(void);
 
 static bool bDispAll = FALSE;
 
-
-int main(int argc, char *argv[])
+void
+main(int argc, char *argv[])
 {
 	word w, len;
 	int h, i, j;
@@ -172,7 +173,7 @@ int main(int argc, char *argv[])
 	if (bDispAll)
 	{
 		fseek(f, 0, SEEK_CUR);		/* Needed due to bug in MS fread()! */
-		filePos = fseek(f, 0, SEEK_CUR);
+		filePos = _lseek(fileno(f), 0, SEEK_CUR);
 		for (i=0; i < numKeys; i++)
 		{
 			grab(SymLen + PatLen);
