@@ -25,106 +25,104 @@
 
 #include "dcc.h"
 #include <stdarg.h>
-#include <malloc.h>
-#include <memory.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define deltaProcLines  20
+#define deltaProcLines 20
 
 
-void newBundle (bundle *procCode)
-/* Allocates memory for a new bundle and initializes it to zero.    */
+// Allocates memory for a new bundle and initializes it to zero.
+void newBundle(bundle *procCode)
 {
-    memset (&(procCode->decl), 0, sizeof(strTable));
-    memset (&(procCode->code), 0, sizeof(strTable));
+    memset(&(procCode->decl), 0, sizeof(strTable));
+    memset(&(procCode->code), 0, sizeof(strTable));
 }
 
 
-static void incTableSize (strTable *strTab)
-/* Increments the size of the table strTab by deltaProcLines and copies all 
- * the strings to the new table.        */
+// Increments the size of the table strTab by deltaProcLines and copies all the strings to the new table.
+static void incTableSize(strTable *strTab)
 {
     strTab->allocLines += deltaProcLines;
-    strTab->str = allocVar (strTab->str, strTab->allocLines*sizeof(char *));
+    strTab->str = allocVar(strTab->str, strTab->allocLines * sizeof(char *));
 }
 
 
-void appendStrTab (strTable *strTab, char *format, ...) 
-/* Appends the new line (in printf style) to the string table strTab.   */
-{  va_list args;
+// Appends the new line (in printf style) to the string table strTab.
+void appendStrTab(strTable *strTab, char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
 
-    va_start (args, format);
-    if (strTab->numLines == strTab->allocLines)
-    {
-        incTableSize (strTab);
+    if (strTab->numLines == strTab->allocLines) {
+        incTableSize(strTab);
     }
-    strTab->str[strTab->numLines] = (char *)malloc(lineSize * sizeof(char));
-    if (strTab->str == NULL)
-    {
+
+    strTab->str[strTab->numLines] = malloc(lineSize * sizeof(char));
+
+    if (strTab->str == NULL) {
         fatalError(MALLOC_FAILED, lineSize * sizeof(char));
     }
-    vsprintf (strTab->str[strTab->numLines], format, args); 
+
+    vsprintf(strTab->str[strTab->numLines], format, args);
     strTab->numLines++;
-    va_end (args);
+    va_end(args);
 }
 
 
-Int nextBundleIdx (strTable *strTab)
-/* Returns the next available index into the table */
+// Returns the next available index into the table
+int nextBundleIdx(strTable *strTab)
 {
-	return (strTab->numLines);
+    return (strTab->numLines);
 }
 
 
-void addLabelBundle (strTable *strTab, Int idx, Int label)
-/* Adds the given label to the start of the line strTab[idx].  The first
- * tab is removed and replaced by this label */
-{ char s[lineSize];
-
-	sprintf (s, "l%ld: %s", label, &strTab->str[idx][4]);
-	strcpy (strTab->str[idx], s);
-}
-
-
-static void writeStrTab (FILE *fp, strTable strTab)
-/* Writes the contents of the string table on the file fp.  */
-{ Int i;
-
-    for (i = 0; i < strTab.numLines; i++)
-        fprintf (fp, "%s", strTab.str[i]); 
-}
-
-
-void writeBundle (FILE *fp, bundle procCode)
-/* Writes the contents of the bundle (procedure code and declaration) to
- * a file.          */
+// Adds the given label to the start of the line strTab[idx].
+// The first tab is removed and replaced by this label
+void addLabelBundle(strTable *strTab, int idx, int label)
 {
-    writeStrTab (fp, procCode.decl);
+    char s[lineSize];
+
+    sprintf(s, "l%ld: %s", label, &strTab->str[idx][4]);
+    strcpy(strTab->str[idx], s);
+}
+
+
+// Writes the contents of the string table on the file fp.
+static void writeStrTab(FILE *fp, strTable strTab)
+{
+    for (int i = 0; i < strTab.numLines; i++)
+        fprintf(fp, "%s", strTab.str[i]);
+}
+
+
+// Writes the contents of the bundle (procedure code and declaration) to a file.
+void writeBundle(FILE *fp, bundle procCode)
+{
+    writeStrTab(fp, procCode.decl);
+
     if (procCode.decl.str[procCode.decl.numLines - 1][0] != ' ')
-       fprintf (fp, "\n");
-    writeStrTab (fp, procCode.code);
+        fprintf(fp, "\n");
+
+    writeStrTab(fp, procCode.code);
 }
 
 
-static void freeStrTab (strTable *strTab)
-/* Frees the storage allocated by the string table. */
-{ Int i;
+// Frees the storage allocated by the string table.
+static void freeStrTab(strTable *strTab)
+{
+    if (strTab->allocLines > 0) {
+        for (int i = 0; i < strTab->numLines; i++)
+            free(strTab->str[i]);
 
-    if (strTab->allocLines > 0)  {
-       for (i = 0; i < strTab->numLines; i++)
-         free (strTab->str[i]); 
-       free (strTab->str);
-       memset (strTab, 0, sizeof(strTable));
+        free(strTab->str);
+        memset(strTab, 0, sizeof(strTable));
     }
 }
 
 
-void freeBundle (bundle *procCode)
-/* Deallocates the space taken by the bundle procCode */
-{ 
-    freeStrTab (&(procCode->decl));
-    freeStrTab (&(procCode->code));
+// Deallocates the space taken by the bundle procCode
+void freeBundle(bundle *procCode)
+{
+    freeStrTab(&(procCode->decl));
+    freeStrTab(&(procCode->code));
 }
-
-

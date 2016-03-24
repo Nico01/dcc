@@ -17,7 +17,6 @@
  *
  */
 
-
 /*****************************************************************************
  * Project: dcc
  * File:    bundle.h
@@ -28,24 +27,21 @@
 #include <stdio.h>
 
 typedef struct {
-    Int     numLines;   /* Number of lines in the table   */
-    Int     allocLines; /* Number of lines allocated in the table */
-    char    **str;      /* Table of strings */
+    int numLines;   // Number of lines in the table
+    int allocLines; // Number of lines allocated in the table
+    char **str;     // Table of strings
 } strTable;
 
-
 typedef struct {
-    strTable    decl;   /* Declarations */
-    strTable    code;   /* C code       */
+    strTable decl; // Declarations
+    strTable code; // C code
 } bundle;
 
+#define lineSize 360 // 3 lines in the mean time */
 
-#define lineSize	360		/* 3 lines in the mean time */
-
-void    newBundle (bundle *procCode);
-void    appendStrTab (strTable *strTab, char *format, ...);
-Int		nextBundleIdx (strTable *strTab);
-void	addLabelBundle (strTable *strTab, Int idx, Int label);
-void    writeBundle (FILE *fp, bundle procCode);
-void    freeBundle (bundle *procCode);
-
+void newBundle(bundle *procCode);
+void appendStrTab(strTable *strTab, char *format, ...);
+int nextBundleIdx(strTable *strTab);
+void addLabelBundle(strTable *strTab, int idx, int label);
+void writeBundle(FILE *fp, bundle procCode);
+void freeBundle(bundle *procCode);
