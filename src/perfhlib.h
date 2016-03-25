@@ -1,3 +1,6 @@
+#ifndef PERFHLIB_H
+#define PERFHLIB_H
+
 /*
  * Copyright (C) 1993, Queensland University of Technology
  *
@@ -51,3 +54,6 @@ void dispKey(int i);            /* Display the key */
 #ifndef LH
 #define LH(p)  ((int)((byte *)(p))[0] + ((int)((byte *)(p))[1] << 8))
 #endif
+
+#endif // PERFHLIB_H
+

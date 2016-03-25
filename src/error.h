@@ -1,3 +1,6 @@
+#ifndef ERROR_H
+#define ERROR_H
+
 /*
  * Copyright (C) 1991-4, Cristina Cifuentes
  *
@@ -49,4 +52,6 @@ typedef enum {
 
 void fatalError(error_msg id, ...);
 void reportError(error_msg id, ...);
+
+#endif // ERROR_H
 

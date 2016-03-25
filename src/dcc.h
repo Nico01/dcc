@@ -1,3 +1,6 @@
+#ifndef DCC_H
+#define DCC_H
+
 /*
  * Copyright (C) 1991-4, Cristina Cifuentes
  * Copyright (C) 1993, Queensland University of Technology
@@ -404,3 +407,6 @@ boolT checkLongRegEq (struct _longId, PICODE, Int, Int, PPROC, COND_EXPR **,
 byte otherLongRegi (byte, Int, LOCAL_ID *);
 void insertIdx (IDX_ARRAY *, Int);
 void propLongId (LOCAL_ID *, byte, byte, char *);
+
+#endif // DCC_H
+

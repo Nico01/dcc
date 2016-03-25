@@ -1,3 +1,6 @@
+#ifndef GRAPH_H
+#define GRAPH_H
+
 /*
  * Copyright (C) 1991-4, Cristina Cifuentes
  *
@@ -145,4 +148,6 @@ typedef struct _derivedNode {
     interval            *Ii;        /* Interval list of Gi  */
     struct _derivedNode *next;      /* Next derived graph   */
 } derSeq;
+
+#endif // GRAPH_H
 

@@ -1,3 +1,6 @@
+#ifndef ICODE_H
+#define ICODE_H
+
 /*
  * Copyright (C) 1991-4, Cristina Cifuentes
  *
@@ -346,3 +349,6 @@ typedef struct {			/* Icode array info */
 	Int		alloc;			/* # icodes allocated 	*/
 	PICODE	icode;			/* Array of icodes		*/
 } ICODE_REC;
+
+#endif // ICODE_H
+

@@ -1,3 +1,6 @@
+#ifndef LOCIDENT_H
+#define LOCIDENT_H
+
 /*
  * Copyright (C) 1991-4, Cristina Cifuentes
  *
@@ -115,4 +118,5 @@ typedef struct {
 	ID			*id;		/* Identifier					*/
 } LOCAL_ID;
 
+#endif // LOCIDENT_H
 

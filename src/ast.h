@@ -1,3 +1,6 @@
+#ifndef AST_H
+#define AST_H
+
 /*
  * Copyright (C) 1991-4, Cristina Cifuentes
  *
@@ -151,4 +154,5 @@ typedef struct _condExpSeq {
     struct _condExpSeq  *next;
 } SEQ_COND_EXPR;
 
+#endif // AST_H
 

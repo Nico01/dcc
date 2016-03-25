@@ -1,3 +1,6 @@
+#ifndef SCANNER_H
+#define SCANNER_H
+
 /*
  * Copyright (C) 1992, Queensland University of Technology
  *
@@ -53,3 +56,6 @@ static void checkInt(Int i);
 
 /* Extracts reg bits from middle of mod-reg-rm byte */
 #define REG(x)  ((byte)(x & 0x38) >> 3)
+
+#endif // SCANNER_H
+

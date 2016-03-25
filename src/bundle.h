@@ -1,3 +1,6 @@
+#ifndef BUNDLE_H
+#define BUNDLE_H
+
 /*
  * Copyright (C) 1991-4, Cristina Cifuentes
  *
@@ -45,3 +48,6 @@ int nextBundleIdx(strTable *strTab);
 void addLabelBundle(strTable *strTab, int idx, int label);
 void writeBundle(FILE *fp, bundle procCode);
 void freeBundle(bundle *procCode);
+
+#endif // BUNDLE_H
+

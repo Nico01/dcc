@@ -1,3 +1,6 @@
+#ifndef SYMTAB_H
+#define SYMTAB_H
+
 /*
  * Copyright (C) 1993, Queensland University of Technology
  *
@@ -59,4 +62,6 @@ word    valHash(dword off, PPROC proc, word *pre);
 void    selectTable(tableType);     /* Select a particular table */
 
 char   *addStrTbl(char *pStr);      /* Add string to string table */
+
+#endif // SYMTAB_H
 
