@@ -21,105 +21,101 @@
  */
 
 /*****************************************************************************
- *          I-code related definitions
- * (C) Cristina Cifuentes
+   I-code related definitions
+   (C) Cristina Cifuentes
  ****************************************************************************/
 
-/* LOW_LEVEL icode flags */
-#define B           0x000001    /* Byte operands (value implicitly used) */
-#define I           0x000002    /* Immed. source */
-#define NOT_HLL     0x000004    /* Not HLL inst. */
-#define FLOAT_OP    0x000008    /* ESC or WAIT   */
+// LOW_LEVEL icode flags
+#define B 0x000001          // Byte operands (value implicitly used)
+#define I 0x000002          // Immed. source
+#define NOT_HLL 0x000004    // Not HLL inst.
+#define FLOAT_OP 0x000008   // ESC or WAIT
 
-#define SEG_IMMED   0x000010    /* Number is relocated segment value */
-#define IMPURE      0x000020    /* Instruction modifies code */
-#define WORD_OFF    0x000040    /* Inst has word offset ie.could be address */
-#define TERMINATES  0x000080    /* Instruction terminates program */
+#define SEG_IMMED 0x000010  // Number is relocated segment value
+#define IMPURE 0x000020     // Instruction modifies code
+#define WORD_OFF 0x000040   // Inst has word offset ie.could be address
+#define TERMINATES 0x000080 // Instruction terminates program
 
-#define CASE        0x000100    /* Label as case part of switch */
-#define SWITCH      0x000200    /* Treat indirect JMP as switch stmt */
-#define TARGET      0x000400    /* Jump target */
-#define SYNTHETIC   0x000800    /* Synthetic jump instruction */
-#define NO_LABEL    0x001000    /* Immed. jump cannot be linked to a label */
-#define NO_CODE     0x002000    /* Hole in Icode array */
-#define SYM_USE     0x004000    /* Instruction uses a symbol */
-#define SYM_DEF     0x008000    /* Instruction defines a symbol */
+#define CASE 0x000100       // Label as case part of switch
+#define SWITCH 0x000200     // Treat indirect JMP as switch stmt
+#define TARGET 0x000400     // Jump target
+#define SYNTHETIC 0x000800  // Synthetic jump instruction
+#define NO_LABEL 0x001000   // Immed. jump cannot be linked to a label
+#define NO_CODE 0x002000    // Hole in Icode array
+#define SYM_USE 0x004000    // Instruction uses a symbol
+#define SYM_DEF 0x008000    // Instruction defines a symbol
 
-#define NO_SRC      0x010000    /* Opcode takes no source */
-#define NO_OPS      0x020000    /* Opcode takes no operands */
-#define IM_OPS      0x040000    /* Opcode takes implicit operands */
-#define SRC_B       0x080000    /* Source operand is byte (dest is word) */
-#define NO_SRC_B    0xF7FFFF    /* Masks off SRC_B */
-#define HLL_LABEL   0x100000    /* Icode has a high level language label */
-#define IM_DST		0x200000	/* Implicit DST for opcode (SIGNEX) */
-#define IM_SRC		0x400000	/* Implicit SRC for opcode (dx:ax)	*/
-#define IM_TMP_DST	0x800000	/* Implicit rTMP DST for opcode (DIV/IDIV) */
+#define NO_SRC 0x010000     // Opcode takes no source
+#define NO_OPS 0x020000     // Opcode takes no operands
+#define IM_OPS 0x040000     // Opcode takes implicit operands
+#define SRC_B 0x080000      // Source operand is byte (dest is word)
+#define NO_SRC_B 0xF7FFFF   // Masks off SRC_B
+#define HLL_LABEL 0x100000  // Icode has a high level language label
+#define IM_DST 0x200000     // Implicit DST for opcode (SIGNEX)
+#define IM_SRC 0x400000     // Implicit SRC for opcode (dx:ax)
+#define IM_TMP_DST 0x800000 // Implicit rTMP DST for opcode (DIV/IDIV)
 
-#define JMP_ICODE  0x1000000    /* Jmp dest immed.op converted to icode index */
-#define JX_LOOP	   0x2000000	/* Cond jump is part of loop conditional exp */
-#define REST_STK   0x4000000	/* Stack needs to be restored after CALL */
+#define JMP_ICODE 0x1000000 // Jmp dest immed.op converted to icode index
+#define JX_LOOP 0x2000000   // Cond jump is part of loop conditional exp
+#define REST_STK 0x4000000  // Stack needs to be restored after CALL
 
-/*  Parser flags  */
-#define TO_REG      0x000100    /* rm is source  */
-#define S           0x000200    /* sign extend   */
-#define OP386       0x000400    /* 386 op-code   */
-#define NSP         0x000800    /* NOT_HLL if SP is src or dst */
-#define ICODEMASK   0xFF00FF    /* Masks off parser flags */
+// Parser flags
+#define TO_REG 0x000100     // rm is source
+#define S 0x000200          // sign extend
+#define OP386 0x000400      // 386 op-code
+#define NSP 0x000800        // NOT_HLL if SP is src or dst
+#define ICODEMASK 0xFF00FF  // Masks off parser flags
 
-/* LOW_LEVEL icode, DU flag bits */
-#define Cf           1  
-#define Sf           2
-#define Zf           4
-#define Df           8
+// LOW_LEVEL icode, DU flag bits
+#define Cf 1
+#define Sf 2
+#define Zf 4
+#define Df 8
 
-/* Machine registers */
-#define rAX          1  /* These are numbered relative to real 8086 */
-#define rCX          2
-#define rDX          3
-#define rBX          4
-#define rSP          5
-#define rBP          6
-#define rSI          7
-#define rDI          8
+// Machine registers
+#define rAX 1 // These are numbered relative to real 8086
+#define rCX 2
+#define rDX 3
+#define rBX 4
+#define rSP 5
+#define rBP 6
+#define rSI 7
+#define rDI 8
 
-#define rES          9
-#define rCS         10
-#define rSS         11
-#define rDS         12
+#define rES 9
+#define rCS 10
+#define rSS 11
+#define rDS 12
 
-#define rAL         13
-#define rCL         14
-#define rDL         15
-#define rBL         16
-#define rAH         17
-#define rCH         18
-#define rDH         19
-#define rBH         20
+#define rAL 13
+#define rCL 14
+#define rDL 15
+#define rBL 16
+#define rAH 17
+#define rCH 18
+#define rDH 19
+#define rBH 20
 
-#define rTMP		21			/* temp register for DIV/IDIV/MOD	*/
-#define INDEXBASE   22          /* Indexed modes go from INDEXBASE to
-                                 * INDEXBASE+7  */
+#define rTMP 21      // temp register for DIV/IDIV/MOD
+#define INDEXBASE 22 // Indexed modes go from INDEXBASE to INDEXBASE+7 
 
-/* Byte and Word registers */
-static char *byteReg[9]  = {"al", "cl", "dl", "bl", 
-							"ah", "ch", "dh", "bh", "tmp" };
-static char *wordReg[21] = {"ax", "cx", "dx", "bx", "sp", "bp", 
-                			"si", "di", "es", "cs", "ss", "ds",
-							"", "", "", "", "", "", "", "", "tmp"};
+// Byte and Word registers
+static const char *byteReg[9] = { "al", "cl", "dl", "bl", "ah", "ch", "dh", "bh", "tmp" };
+static const char *wordReg[21] = { "ax", "cx", "dx", "bx", "sp", "bp", "si", "di", "es", "cs", "ss",
+                             "ds", "",   "",   "",   "",   "",   "",   "",   "",   "tmp" };
 
-/* Types of icodes */
+// Types of icodes
 typedef enum {
-    NOT_SCANNED = 0,    /* not even scanned yet */
-    LOW_LEVEL,          /* low-level icode  */
-    HIGH_LEVEL          /* high-level icode */
+    NOT_SCANNED = 0, // not even scanned yet
+    LOW_LEVEL,       // low-level icode
+    HIGH_LEVEL       // high-level icode
 } icodeType;
 
-
-/* LOW_LEVEL icode opcodes */
+// LOW_LEVEL icode opcodes
 typedef enum {
-	iCBW,		/* 0 */
+    iCBW, // 0
     iAAA,
-    iAAD,       
+    iAAD,
     iAAM,
     iAAS,
     iADC,
@@ -127,7 +123,7 @@ typedef enum {
     iAND,
     iBOUND,
     iCALL,
-    iCALLF,		/* 10 */
+    iCALLF, // 10
     iCLC,
     iCLD,
     iCLI,
@@ -137,7 +133,7 @@ typedef enum {
     iREPNE_CMPS,
     iREPE_CMPS,
     iDAA,
-    iDAS,		/* 20 */
+    iDAS, // 20
     iDEC,
     iDIV,
     iENTER,
@@ -147,7 +143,7 @@ typedef enum {
     iIMUL,
     iIN,
     iINC,
-    iINS,		/* 30 */
+    iINS, // 30
     iREP_INS,
     iINT,
     iIRET,
@@ -155,19 +151,19 @@ typedef enum {
     iJBE,
     iJAE,
     iJA,
-    iJE,                
+    iJE,
     iJNE,
-    iJL,		/* 40 */
+    iJL, // 40
     iJGE,
     iJLE,
     iJG,
-    iJS,                
+    iJS,
     iJNS,
     iJO,
     iJNO,
-    iJP,    
+    iJP,
     iJNP,
-    iJCXZ,		/* 50 */
+    iJCXZ, // 50
     iJMP,
     iJMPF,
     iLAHF,
@@ -177,17 +173,17 @@ typedef enum {
     iLES,
     iLOCK,
     iLODS,
-    iREP_LODS,	/* 60 */
+    iREP_LODS, // 60
     iLOOP,
     iLOOPE,
-    iLOOPNE,            
-    iMOV,		/* 64 */
+    iLOOPNE,
+    iMOV, // 64
     iMOVS,
     iREP_MOVS,
-    iMUL,		/* 67 */
+    iMUL, // 67
     iNEG,
     iNOT,
-    iOR,   		/* 70 */ 
+    iOR, // 70
     iOUT,
     iOUTS,
     iREP_OUTS,
@@ -197,17 +193,17 @@ typedef enum {
     iPUSH,
     iPUSHA,
     iPUSHF,
-    iRCL,		/* 80 */
+    iRCL, // 80
     iRCR,
     iROL,
     iROR,
-    iRET,		/* 84 */
-    iRETF,          
+    iRET, // 84
+    iRETF,
     iSAHF,
     iSAR,
     iSHL,
     iSHR,
-    iSBB,		/* 90 */
+    iSBB, // 90
     iSCAS,
     iREPNE_SCAS,
     iREPE_SCAS,
@@ -217,137 +213,134 @@ typedef enum {
     iSTI,
     iSTOS,
     iREP_STOS,
-    iSUB,		/* 100 */
+    iSUB, // 100
     iTEST,
-    iWAIT,          
-    iXCHG,          
-    iXLAT,          
+    iWAIT,
+    iXCHG,
+    iXLAT,
     iXOR,
-    iINTO,          
+    iINTO,
     iNOP,
-    iREPNE,         
+    iREPNE,
     iREPE,
-	iMOD,		/* 110 */
+    iMOD, // 110
 } llIcode;
 
-
-/* HIGH_LEVEL icodes opcodes */
+// HIGH_LEVEL icodes opcodes
 typedef enum {
-    ASSIGN,         /* :=               		*/
-	CALL,			/* Call procedure			*/
-    JCOND,          /* Conditional jump 		*/
-	RET,			/* Return from procedure	*/
-	/* pseudo high-level icodes */
-	POP,			/* Pop expression			*/
-	PUSH,			/* Push expression			*/
+    ASSIGN, // :=
+    CALL,   // Call procedure
+    JCOND,  // Conditional jump
+    RET,    // Return from procedure
+
+    // pseudo high-level icodes
+    POP,    // Pop expression
+    PUSH,   // Push expression
 } hlIcode;
 
-
-/* Operand is defined, used or both flag */
+// Operand is defined, used or both flag
 typedef enum {
-	DEF,			/* Operand is defined						*/
-	USE,			/* Operand is used							*/
-	USE_DEF,		/* Operand is used and defined				*/
-	NONE,			/* No operation is required on this operand	*/
+    DEF,     // Operand is defined
+    USE,     // Operand is used
+    USE_DEF, // Operand is used and defined
+    NONE,    // No operation is required on this operand
 } operDu;
 
-
-/* Def/use of flags - low 4 bits represent flags */
+// Def/use of flags - low 4 bits represent flags
 typedef struct {
-    byte   d;
-    byte   u;
+    uint8_t d;
+    uint8_t u;
 } DU;
 typedef DU *PDU;
 
-/* Def/Use of registers and stack variables */
+// Def/Use of registers and stack variables
 typedef struct {
-	dword	def;		/* For Registers: position in dword is reg index*/
-	dword	lastDefRegi;/* Bit set if last def of this register in BB   */
-	dword	use;		/* For Registers: position in dword is reg index*/
-}DU_ICODE;
+    uint32_t def;         // For Registers: position in dword is reg index
+    uint32_t lastDefRegi; // Bit set if last def of this register in BB
+    uint32_t use;         // For Registers: position in dword is reg index
+} DU_ICODE;
 
-
-/* Definition-use chain for level 1 (within a basic block) */
-#define MAX_REGS_DEF	2		/* 2 regs def'd for long-reg vars */
-#define MAX_USES		5
+// Definition-use chain for level 1 (within a basic block)
+#define MAX_REGS_DEF 2 // 2 regs def'd for long-reg vars
+#define MAX_USES 5
 
 typedef struct {
-	Int		numRegsDef;			/* # registers defined by this inst		*/
-	byte	regi[MAX_REGS_DEF];	/* registers defined by this inst		*/
-	Int		idx[MAX_REGS_DEF][MAX_USES];	/* inst that uses this def  */
+    int numRegsDef;                  // # registers defined by this inst
+    uint8_t regi[MAX_REGS_DEF];      // registers defined by this inst
+    int idx[MAX_REGS_DEF][MAX_USES]; // inst that uses this def
 } DU1;
 
-
-/* LOW_LEVEL icode operand record */
+// LOW_LEVEL icode operand record
 typedef struct {
-    byte     seg;               /* CS, DS, ES, SS                       */
-    int16    segValue;          /* Value of segment seg during analysis */
-    byte     segOver;           /* CS, DS, ES, SS if segment override   */
-    byte     regi;              /* 0 < regs < INDEXBASE <= index modes  */
-    int16    off;               /* memory address offset                */
+    uint8_t seg;      // CS, DS, ES, SS
+    int16_t segValue; // Value of segment seg during analysis
+    uint8_t segOver;  // CS, DS, ES, SS if segment override
+    uint8_t regi;     // 0 < regs < INDEXBASE <= index modes
+    int16_t off;      // memory address offset
 } ICODEMEM;
 typedef ICODEMEM *PMEM;
 
-/* LOW_LEVEL operand location: source or destination */
+// LOW_LEVEL operand location: source or destination
 typedef enum {
-	SRC,						/* Source operand 		*/
-	DST,						/* Destination operand	*/
-	LHS_OP,						/* Left-hand side operand (for HIGH_LEVEL) */
+    SRC,    // Source operand
+    DST,    // Destination operand
+    LHS_OP, // Left-hand side operand (for HIGH_LEVEL)
 } opLoc;
 
-/* Icode definition: LOW_LEVEL and HIGH_LEVEL */
-typedef struct {
-    icodeType           type;           /* Icode type                   */
-    boolT               invalid;        /* Has no HIGH_LEVEL equivalent */
-	struct _BB			*inBB;			/* BB to which this icode belongs */
-	DU_ICODE			du;				/* Def/use regs/vars			*/
-	DU1					du1;			/* du chain 1					*/
-	Int					codeIdx;		/* Index into cCode.code		*/
-    struct {                            /* Different types of icodes    */
-        struct {                        /* For LOW_LEVEL icodes         */
-            llIcode     opcode;         /* llIcode instruction          */
-            byte        numBytes;       /* Number of bytes this instr   */
-			flags32     flg;            /* icode flags                  */
-            dword       label;          /* offset in image (20-bit adr) */
-            ICODEMEM    dst;            /* destination operand          */
-            ICODEMEM    src;            /* source operand               */
-            union {                     /* Source operand if (flg & I)  */
-                dword   op;             /*   idx of immed src op        */
-				struct {				/* Call & # actual arg bytes	*/
-                  struct _proc *proc;   /*   ^ target proc (for CALL(F))*/
-				  Int		   cb;		/*   # actual arg bytes			*/
-				}		proc;
-            }           immed;
-            DU          flagDU;         /* def/use of flags				*/
-            struct {                    /* Case table if op==JMP && !I  */
-                Int     numEntries;     /*   # entries in case table    */
-                dword  *entries;        /*   array of offsets           */
-            }           caseTbl;
-            Int         hllLabNum;      /* label # for hll codegen      */
-        }               		 ll;
 
-        struct _hl {                        /* For HIGH_LEVEL icodes    */
-            hlIcode              opcode;    /* hlIcode opcode           */
-            union {                         /* different operands       */
-                struct {                    /* for ASSIGN				*/
-                    COND_EXPR    *lhs;
-                    COND_EXPR    *rhs;
-                }                asgn;       
-                COND_EXPR        *exp;      /* for JCOND, RET, PUSH, POP*/
-				struct {					/* for CALL					*/
-					struct _proc     *proc;
-					struct _STKFRAME *args;	/* actual arguments			*/
-				}				 call;
-            }                    oper;      /* operand                  */
-        }               		 hl;
-    }                   		 ic;        /* intermediate code        */
+// Icode definition: LOW_LEVEL and HIGH_LEVEL
+typedef struct {
+    icodeType type;                         // Icode type
+    bool invalid;                           // Has no HIGH_LEVEL equivalent
+    struct _BB *inBB;                       // BB to which this icode belongs
+    DU_ICODE du;                            // Def/use regs/vars
+    DU1 du1;                                // du chain 1
+    int codeIdx;                            // Index into cCode.code
+    struct {                                // Different types of icodes
+        struct {                            // For LOW_LEVEL icodes
+            llIcode opcode;                 // llIcode instruction
+            uint8_t numBytes;               // Number of bytes this instr
+            uint32_t flg;                   // icode flags
+            uint32_t label;                 // offset in image (20-bit adr)
+            ICODEMEM dst;                   // destination operand
+            ICODEMEM src;                   // source operand
+            union {                         // Source operand if (flg & I)
+                uint32_t op;                // idx of immed src op
+                struct {                    // Call & # actual arg bytes
+                    struct _proc *proc;     // ^ target proc (for CALL(F))
+                    Int cb;                 // # actual arg bytes
+                } proc;
+            } immed;
+            DU flagDU;                      // def/use of flags
+            struct {                        // Case table if op==JMP && !I
+                int numEntries;             // # entries in case table
+                uint32_t *entries;          // array of offsets
+            } caseTbl;
+            int hllLabNum;                  // label # for hll codegen
+        } ll;
+
+        struct _hl {                        // For HIGH_LEVEL icodes
+            hlIcode opcode;                 // hlIcode opcode
+            union {                         // different operands
+                struct {                    // for ASSIGN
+                    COND_EXPR *lhs;
+                    COND_EXPR *rhs;
+                } asgn;
+                COND_EXPR *exp;             // for JCOND, RET, PUSH, POP
+                struct {                    // for CALL
+                    struct _proc *proc;
+                    struct _STKFRAME *args; // actual arguments
+                } call;
+            } oper;                         // operand
+        } hl;
+    } ic;                                   // intermediate code
 } ICODE;
 typedef ICODE *PICODE;
 
-typedef struct {			/* Icode array info */
-	Int		numIcode;		/* # icodes in use 		*/
-	Int		alloc;			/* # icodes allocated 	*/
-	PICODE	icode;			/* Array of icodes		*/
+typedef struct {  // Icode array info
+    int numIcode; // # icodes in use
+    int alloc;    // # icodes allocated
+    PICODE icode; // Array of icodes
 } ICODE_REC;
 
 #endif // ICODE_H

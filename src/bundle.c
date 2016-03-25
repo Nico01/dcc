@@ -82,7 +82,7 @@ void addLabelBundle(strTable *strTab, int idx, int label)
 {
     char s[lineSize];
 
-    sprintf(s, "l%ld: %s", label, &strTab->str[idx][4]);
+    sprintf(s, "l%d: %s", label, &strTab->str[idx][4]);
     strcpy(strTab->str[idx], s);
 }
 
