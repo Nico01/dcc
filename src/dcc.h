@@ -23,6 +23,8 @@
  * (C) Cristina Cifuentes, Mike van Emmerik
  ****************************************************************************/
 
+#include <stdint.h>
+#include <stdbool.h>
 
 /**** Common definitions and macros ****/
 #ifdef __MSDOS__            /* Intel: 16 bit integer        */
@@ -326,15 +328,15 @@ void    SetupLibCheck(void);                                /* chklib.c     */
 void    CleanupLibCheck(void);                              /* chklib.c     */
 boolT   LibCheck(PPROC p);                                  /* chklib.c     */
 
-/* Exported functions from procs.c */
-boolT	insertCallGraph (PCALL_GRAPH, PPROC, PPROC);
-void	writeCallGraph (PCALL_GRAPH);
-void 	newRegArg (PPROC, PICODE, PICODE);
-boolT 	newStkArg (PICODE, COND_EXPR *, llIcode, PPROC);
-void	allocStkArgs (PICODE, Int);
-void	placeStkArg (PICODE, COND_EXPR *, Int);
-void	adjustActArgType (COND_EXPR *, hlType, PPROC);		
-void	adjustForArgType (PSTKFRAME, Int, hlType);
+// Exported functions from procs.c
+bool insertCallGraph(PCALL_GRAPH, PPROC, PPROC);
+void writeCallGraph(PCALL_GRAPH);
+void newRegArg(PPROC, PICODE, PICODE);
+bool newStkArg(PICODE, COND_EXPR *, llIcode, PPROC);
+void allocStkArgs(PICODE, int);
+void placeStkArg(PICODE, COND_EXPR *, int);
+void adjustActArgType(COND_EXPR *, hlType, PPROC);		
+void adjustForArgType(PSTKFRAME, int, hlType);
 
 /* Exported functions from ast.c */
 COND_EXPR *boolCondExp (COND_EXPR *lhs, COND_EXPR *rhs, condOp op);
