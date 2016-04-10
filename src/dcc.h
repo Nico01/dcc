@@ -396,7 +396,7 @@ void	inverseCondOp (COND_EXPR **);
 // Exported funcions from locident.c
 int newByteWordRegId (LOCAL_ID *, hlType t, uint8_t regi);
 int newByteWordStkId (LOCAL_ID *, hlType t, int off, uint8_t regOff);
-int	newIntIdxId (LOCAL_ID *, int16_t seg, int16_t off, uint8_t regi, int, hlType);
+int newIntIdxId (LOCAL_ID *, int16_t seg, int16_t off, uint8_t regi, int, hlType);
 int newLongRegId (LOCAL_ID *, hlType t, uint8_t regH, uint8_t regL, int idx);
 int newLongStkId (LOCAL_ID *, hlType t, int offH, int offL);
 int newLongId (LOCAL_ID *, opLoc sd, PICODE, hlFirst, int idx, operDu, int);
