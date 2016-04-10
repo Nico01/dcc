@@ -393,20 +393,18 @@ Int		power2 (Int);
 void	writeDU (PICODE, Int);
 void	inverseCondOp (COND_EXPR **);
 
-/* Exported funcions from locident.c */ 
-Int newByteWordRegId (LOCAL_ID *, hlType t, byte regi);
-Int newByteWordStkId (LOCAL_ID *, hlType t, Int off, byte regOff);
-Int	newIntIdxId (LOCAL_ID *, int16 seg, int16 off, byte regi, Int, hlType);
-Int newLongRegId (LOCAL_ID *, hlType t, byte regH, byte regL, Int idx);
-Int newLongStkId (LOCAL_ID *, hlType t, Int offH, Int offL);
-Int newLongId (LOCAL_ID *, opLoc sd, PICODE, hlFirst, Int idx, operDu, Int);
-boolT checkLongEq (struct _longStkId, PICODE, Int, Int, PPROC, COND_EXPR **,
-				   COND_EXPR **, Int);
-boolT checkLongRegEq (struct _longId, PICODE, Int, Int, PPROC, COND_EXPR **,
-					  COND_EXPR **, Int);
-byte otherLongRegi (byte, Int, LOCAL_ID *);
-void insertIdx (IDX_ARRAY *, Int);
-void propLongId (LOCAL_ID *, byte, byte, char *);
+// Exported funcions from locident.c
+int newByteWordRegId (LOCAL_ID *, hlType t, uint8_t regi);
+int newByteWordStkId (LOCAL_ID *, hlType t, int off, uint8_t regOff);
+int	newIntIdxId (LOCAL_ID *, int16_t seg, int16_t off, uint8_t regi, int, hlType);
+int newLongRegId (LOCAL_ID *, hlType t, uint8_t regH, uint8_t regL, int idx);
+int newLongStkId (LOCAL_ID *, hlType t, int offH, int offL);
+int newLongId (LOCAL_ID *, opLoc sd, PICODE, hlFirst, int idx, operDu, int);
+bool checkLongEq (struct _longStkId, PICODE, int, int, PPROC, COND_EXPR **, COND_EXPR **, int);
+bool checkLongRegEq (struct _longId, PICODE, int, int, PPROC, COND_EXPR **, COND_EXPR **, int);
+uint8_t otherLongRegi (uint8_t, int, LOCAL_ID *);
+void insertIdx (IDX_ARRAY *, int);
+void propLongId (LOCAL_ID *, uint8_t, uint8_t, char *);
 
 #endif // DCC_H
 
