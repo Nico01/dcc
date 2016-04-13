@@ -102,7 +102,7 @@
 // Byte and Word registers
 static const char *byteReg[9] = { "al", "cl", "dl", "bl", "ah", "ch", "dh", "bh", "tmp" };
 static const char *wordReg[21] = { "ax", "cx", "dx", "bx", "sp", "bp", "si", "di", "es", "cs", "ss",
-                             "ds", "",   "",   "",   "",   "",   "",   "",   "",   "tmp" };
+                                   "ds", "",   "",   "",   "",   "",   "",   "",   "",   "tmp" };
 
 // Types of icodes
 typedef enum {

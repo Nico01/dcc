@@ -89,15 +89,15 @@ typedef unsigned char boolT; /* 8 bits   */
 #include "bundle.h"
 
 
-/* STATE TABLE */
+// STATE TABLE
 typedef struct {
-    dword       IP;             /* Offset into Image                    */
-    int16       r[INDEXBASE];   /* Value of segs and AX                 */
-    byte        f[INDEXBASE];   /* True if r[.] has a value             */
-    struct {                    /* For case stmt indexed reg            */
-        byte    regi;           /*   Last conditional jump              */
-        int16   immed;          /*   Contents of the previous register  */
-    }           JCond;
+    uint32_t IP;           // Offset into Image
+    int16_t  r[INDEXBASE]; // Value of segs and AX
+    uint8_t  f[INDEXBASE]; // True if r[.] has a value
+    struct {               // For case stmt indexed reg
+        uint8_t regi;      // Last conditional jump
+        int16_t immed;     // Contents of the previous register
+    } JCond;
 } STATE;
 typedef STATE *PSTATE;
 
@@ -247,24 +247,25 @@ typedef struct {            /* Command line option flags */
 extern OPTION option;       /* Command line options             */
 extern SYMTAB symtab;       /* Global symbol table              */
 
-typedef struct {            /* Loaded program image parameters  */
-    int16       initCS;
-    int16       initIP;     /* These are initial load values    */
-    int16       initSS;     /* Probably not of great interest   */
-    int16       initSP;
-    boolT       fCOM;       /* Flag set if COM program (else EXE)*/
-    Int         cReloc;     /* No. of relocation table entries  */
-    dword      *relocTable; /* Ptr. to relocation table         */
-    byte       *map;        /* Memory bitmap ptr                */
-    Int         cProcs;     /* Number of procedures so far      */
-    Int         offMain;    /* The offset  of the main() proc   */
-    word        segMain;    /* The segment of the main() proc   */
-    Int         cbImage;    /* Length of image in bytes         */
-    byte       *Image;      /* Allocated by loader to hold entire 
-                             * program image                    */
+
+typedef struct {          // Loaded program image parameters
+    uint16_t initCS;
+    uint16_t initIP;      // These are initial load values
+    uint16_t initSS;      // Probably not of great interest
+    uint16_t initSP;
+    bool     fCOM;        // Flag set if COM program (else EXE)
+    uint16_t cReloc;      // No. of relocation table entries
+    uint32_t *relocTable; // Ptr. to relocation table
+    uint8_t  *map;        // Memory bitmap ptr
+    uint32_t cProcs;      // Number of procedures so far
+    uint32_t offMain;     // The offset  of the main() proc
+    uint16_t segMain;     // The segment of the main() proc
+    size_t   cbImage;     // Length of image in bytes
+    uint8_t  *Image;      // Allocated by loader to hold entire program image
 } PROG;
 
-extern PROG prog;   		/* Loaded program image parameters  */
+extern PROG prog;         // Loaded program image parameters
+
 extern char condExp[200];	/* Conditional expression buffer 	*/
 extern char callBuf[100];	/* Function call buffer				*/
 extern dword duReg[30];		/* def/use bits for registers		*/
@@ -294,8 +295,7 @@ typedef struct {
 extern STATS stats; /* cfg statistics   */
 
 
-/**** Global function prototypes ****/
-
+// Global function prototypes
 void    FrontEnd(char *filename, PCALL_GRAPH *);            /* frontend.c   */
 void   *allocMem(Int cb);                                   /* frontend.c   */
 void   *allocVar(void *p, Int newsize);                     /* frontend.c   */
@@ -306,11 +306,11 @@ void    freeCFG(PBB cfg);                                   /* graph.c      */
 PBB     newBB(PBB, Int, Int, byte, Int, PPROC);				/* graph.c		*/
 void    BackEnd(char *filename, PCALL_GRAPH);               /* backend.c    */
 char   *cChar(byte c);                                      /* backend.c    */
-Int     scan(dword ip, PICODE p);                           /* scanner.c    */
-void    parse (PCALL_GRAPH *);                              /* parser.c     */
-boolT   labelSrch(PICODE pIc, Int n, dword tg, Int *pIdx);  /* parser.c     */
-void    setState(PSTATE state, word reg, int16 value);      /* parser.c     */
-Int		strSize (byte *, char);								/* parser.c		*/
+int scan(uint32_t ip, PICODE p);                            /* scanner.c    */
+void parse (PCALL_GRAPH *);                                 /* parser.c     */
+bool labelSrch(PICODE pIc, int n, uint32_t tg, int *pIdx);  /* parser.c     */
+void setState(PSTATE state, uint16_t reg, int16_t value);   /* parser.c     */
+int strSize (uint8_t *, char);								/* parser.c		*/
 void    disassem(Int pass, PPROC pProc);                    /* disassem.c   */
 void    interactDis(PPROC initProc, Int initIC);            /* disassem.c   */
 void	bindIcodeOff (PPROC);								/* idioms.c		*/
