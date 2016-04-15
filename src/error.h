@@ -20,13 +20,13 @@
  *
  */
 
-/*****************************************************************************
- * Error codes
- * (C) Cristina Cifuentes
- ****************************************************************************/
+/*
+ Error codes
+ (C) Cristina Cifuentes
+*/
 
-/* These definitions refer to errorMessage in error.c */
 
+// These definitions refer to errorMessage in error.c
 typedef enum {
     USAGE = 0,
     INVALID_ARG,

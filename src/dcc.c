@@ -17,11 +17,11 @@
  *
  */
 
-/*****************************************************************************
- *              dcc decompiler
- * Reads the command line switches and then executes each major section in turn
- * (C) Cristina Cifuentes
- ****************************************************************************/
+/*
+ dcc decompiler
+ Reads the command line switches and then executes each major section in turn
+ (C) Cristina Cifuentes
+*/
 
 #include "dcc.h"
 #include <stdio.h>
@@ -30,16 +30,16 @@
 #include <getopt.h>
 #include <stdbool.h>
 
-/* Global variables - extern to other modules */
-char *progname;              /* argv[0] - for error msgs               */
-char *asm1_name, *asm2_name; /* Assembler output filenames             */
-SYMTAB symtab;               /* Global symbol table                    */
-STATS stats;                 /* cfg statistics                         */
-PROG prog;                   /* programs fields                        */
-OPTION option;               /* Command line options                   */
-PPROC pProcList;             /* List of procedures, topologically sort */
-PPROC pLastProc;             /* Pointer to last node in procedure list */
-CALL_GRAPH *callGraph;       /* Call graph of the program              */
+// Global variables - extern to other modules
+char *progname;              // argv[0] - for error msgs
+char *asm1_name, *asm2_name; // Assembler output filenames
+SYMTAB symtab;               // Global symbol table
+STATS stats;                 // cfg statistics
+PROG prog;                   // programs fields
+OPTION option;               // Command line options
+PPROC pProcList;             // List of procedures, topologically sort
+PPROC pLastProc;             // Pointer to last node in procedure list
+CALL_GRAPH *callGraph;       // Call graph of the program
 
 
 static struct option opt[] = {
@@ -54,7 +54,6 @@ static struct option opt[] = {
     {"file",         required_argument, 0, 'f'},
     {0, 0, 0, 0}
 };
-
 
 static void make_asmname(const char *str)
 {
@@ -73,7 +72,6 @@ static void make_asmname(const char *str)
     remove(asm1_name);
     remove(asm2_name);
 }
-
 
 static void help() {
     fprintf(stderr,
@@ -95,10 +93,7 @@ static void help() {
     exit(EXIT_FAILURE);
 }
 
-
-/****************************************************************************
- * initargs - Extract command line arguments
- ***************************************************************************/
+// initargs - Extract command line arguments
 static char *initargs(int argc, char *argv[])
 {
     progname = argv[0];
@@ -114,22 +109,22 @@ static char *initargs(int argc, char *argv[])
         case 'h':
             help();
             break;
-        case 'v': /* Make everything verbose */
+        case 'v': // Make everything verbose
             option.verbose = true;
             break;
-        case 'V': /* Very verbose => verbose */
+        case 'V': // Very verbose => verbose
             option.VeryVerbose = true;
             break;
-        case 's': /* Print Stats */
+        case 's': // Print Stats
             option.Stats = true;
             break;
-        case 'm': /* Print memory map */
+        case 'm': // Print memory map
             option.Map = true;
             break;
         case 'i':
             option.Interact = true;
             break;
-        case 'a': /* Print assembler listing */
+        case 'a': // Print assembler listing
             option.asm1 = true;
             break;
         case 'A':
@@ -149,36 +144,27 @@ static char *initargs(int argc, char *argv[])
     return filename;
 }
 
-
-/****************************************************************************
- * main
- ***************************************************************************/
 int main(int argc, char *argv[])
 {
-    /* Extract switches and filename */
+    // Extract switches and filename
     char *filename = initargs(argc, argv);
 
-    /* Front end reads in EXE or COM file, parses it into I-code while
-     * building the call graph and attaching appropriate bits of code for
-     * each procedure.
-    */
+    /* Front end reads in EXE or COM file, parses it into I-code while building the call graph
+       and attaching appropriate bits of code for each procedure. */
     FrontEnd(filename, &callGraph);
 
     /* In the middle is a so called Universal Decompiling Machine.
-     * It processes the procedure list and I-code and attaches where it can
-     * to each procedure an optimised cfg and ud lists
-    */
+       It processes the procedure list and I-code and attaches where it can to each procedure
+       an optimised cfg and ud lists */
     udm();
 
-    /* Back end converts each procedure into C using I-code, interval
-     * analysis, data flow etc. and outputs it to output file ready for
-     * re-compilation.
-    */
+    /* Back end converts each procedure into C using I-code, interval analysis, data flow etc.
+       and outputs it to output file ready for re-compilation. */
     BackEnd(filename, callGraph);
 
     writeCallGraph(callGraph);
-    /*
-        freeDataStructures(pProcList);
-    */
+
+    // freeDataStructures(pProcList);
+
     return 0;
 }
