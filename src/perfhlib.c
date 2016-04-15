@@ -26,37 +26,36 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "perfhlib.h"
 
 /* Private data structures */
 
-static  int     NumEntry;   /* Number of entries in the hash table (# keys) */
-static  int     EntryLen;   /* Size (bytes) of each entry (size of keys) */
-static  int     SetSize;    /* Size of the char set */
-static  char    SetMin;     /* First char in the set */
-static  int     NumVert;    /* c times NumEntry */
+static int NumEntry; /* Number of entries in the hash table (# keys) */
+static int EntryLen; /* Size (bytes) of each entry (size of keys) */
+static int SetSize;  /* Size of the char set */
+static char SetMin;  /* First char in the set */
+static int NumVert;  /* c times NumEntry */
 
-static  word    *T1base, *T2base;   /* Pointers to start of T1, T2 */
-static  word    *T1, *T2;   /* Pointers to T1[i], T2[i] */
+static word *T1base, *T2base; /* Pointers to start of T1, T2 */
+static word *T1, *T2;         /* Pointers to T1[i], T2[i] */
 
-static  int     *graphNode; /* The array of edges */
-static  int     *graphNext; /* Linked list of edges */
-static  int     *graphFirst;/* First edge at a vertex */
+static int *graphNode;  /* The array of edges */
+static int *graphNext;  /* Linked list of edges */
+static int *graphFirst; /* First edge at a vertex */
 
-static  short   *g;         /* g[] */
+static short *g; /* g[] */
 
-static  int     numEdges;   /* An edge counter */
-static  bool    *visited;   /* Array of bools: whether visited */
+static int numEdges;  /* An edge counter */
+static bool *visited; /* Array of bools: whether visited */
 
 /* Private prototypes */
 static void initGraph(void);
 static void addToGraph(int e, int v1, int v2);
 static bool isCycle(void);
-static void duplicateKeys(int v1, int v2);
-                     
-void
-hashParams(int _NumEntry, int _EntryLen, int _SetSize, char _SetMin,
-                    int _NumVert)
+//static void duplicateKeys(int v1, int v2);
+
+void hashParams(int _NumEntry, int _EntryLen, int _SetSize, char _SetMin, int _NumVert)
 {
     /* These parameters are stored in statics so as to obviate the need for
         passing all these (or defererencing pointers) for every call to hash()
@@ -64,39 +63,32 @@ hashParams(int _NumEntry, int _EntryLen, int _SetSize, char _SetMin,
 
     NumEntry = _NumEntry;
     EntryLen = _EntryLen;
-    SetSize  = _SetSize;
-    SetMin   = _SetMin;
-    NumVert  = _NumVert;
+    SetSize = _SetSize;
+    SetMin = _SetMin;
+    NumVert = _NumVert;
 
     /* Allocate the variable sized tables etc */
-    if ((T1base = (word *)malloc(EntryLen * SetSize * sizeof(word))) == 0)
-    {
+    if ((T1base = (word *)malloc(EntryLen * SetSize * sizeof(word))) == 0) {
         goto BadAlloc;
     }
-    if ((T2base = (word *)malloc(EntryLen * SetSize * sizeof(word))) == 0)
-    {
-        goto BadAlloc;
-    }
-
-    if ((graphNode = (int *)malloc((NumEntry*2 + 1) * sizeof(int))) == 0)
-    {
-        goto BadAlloc;
-    }
-    if ((graphNext = (int *)malloc((NumEntry*2 + 1) * sizeof(int))) == 0)
-    {
-        goto BadAlloc;
-    }
-    if ((graphFirst = (int *)malloc((NumVert + 1) * sizeof(int))) == 0)
-    {
+    if ((T2base = (word *)malloc(EntryLen * SetSize * sizeof(word))) == 0) {
         goto BadAlloc;
     }
 
-    if ((g = (short *)malloc((NumVert+1) * sizeof(short))) == 0)
-    {
+    if ((graphNode = (int *)malloc((NumEntry * 2 + 1) * sizeof(int))) == 0) {
         goto BadAlloc;
     }
-    if ((visited = (bool *)malloc((NumVert+1) * sizeof(bool))) == 0)
-    {
+    if ((graphNext = (int *)malloc((NumEntry * 2 + 1) * sizeof(int))) == 0) {
+        goto BadAlloc;
+    }
+    if ((graphFirst = (int *)malloc((NumVert + 1) * sizeof(int))) == 0) {
+        goto BadAlloc;
+    }
+
+    if ((g = (short *)malloc((NumVert + 1) * sizeof(short))) == 0) {
+        goto BadAlloc;
+    }
+    if ((visited = (bool *)malloc((NumVert + 1) * sizeof(bool))) == 0) {
         goto BadAlloc;
     }
     return;
@@ -107,20 +99,24 @@ BadAlloc:
     exit(1);
 }
 
-void
-hashCleanup(void)
+void hashCleanup(void)
 {
     /* Free the storage for variable sized tables etc */
-    if (T1base) free(T1base);
-    if (T2base) free(T2base);
-    if (graphNode) free(graphNode);
-    if (graphNext) free(graphNext);
-    if (graphFirst) free(graphFirst);
-    if (g) free(g);
+    if (T1base)
+        free(T1base);
+    if (T2base)
+        free(T2base);
+    if (graphNode)
+        free(graphNode);
+    if (graphNext)
+        free(graphNext);
+    if (graphFirst)
+        free(graphFirst);
+    if (g)
+        free(g);
 }
 
-void
-map(void)
+void map(void)
 {
     int i, j, c;
     word f1, f2;
@@ -129,24 +125,21 @@ map(void)
 
     c = 0;
 
-    do
-    {
+    do {
         initGraph();
-        cycle = FALSE;
+        cycle = false;
 
         /* Randomly generate T1 and T2 */
-        for (i=0; i < SetSize*EntryLen; i++)
-        {
+        for (i = 0; i < SetSize * EntryLen; i++) {
             T1base[i] = rand() % NumVert;
             T2base[i] = rand() % NumVert;
         }
 
-        for (i=0; i < NumEntry; i++)
-        {
-            f1 = 0; f2 = 0;
+        for (i = 0; i < NumEntry; i++) {
+            f1 = 0;
+            f2 = 0;
             getKey(i, &keys);
-            for (j=0; j < EntryLen; j++)
-            {
+            for (j = 0; j < EntryLen; j++) {
                 T1 = T1base + j * SetSize;
                 T2 = T2base + j * SetSize;
                 f1 += T1[keys[j] - SetMin];
@@ -154,44 +147,36 @@ map(void)
             }
             f1 %= (word)NumVert;
             f2 %= (word)NumVert;
-            if (f1 == f2)
-            {
+            if (f1 == f2) {
                 /* A self loop. Reject! */
                 printf("Self loop on vertex %d!\n", f1);
-                cycle = TRUE;
+                cycle = true;
                 break;
             }
             addToGraph(numEdges++, f1, f2);
         }
-        if (cycle || (cycle = isCycle()))   /* OK - is there a cycle? */
+        if (cycle || (cycle = isCycle())) /* OK - is there a cycle? */
         {
             printf("Iteration %d\n", ++c);
-        }
-        else
-        {
+        } else {
             break;
         }
-    }
-    while (/* there is a cycle */ 1);
-
+    } while (/* there is a cycle */ 1);
 }
 
 /* Initialise the graph */
-static void
-initGraph(void)
+static void initGraph(void)
 {
     int i;
 
-    for (i=1; i <= NumVert; i++)
-    {
+    for (i = 1; i <= NumVert; i++) {
         graphFirst[i] = 0;
     }
 
-    for (i= -NumEntry; i <= NumEntry; i++)
-    {
+    for (i = -NumEntry; i <= NumEntry; i++) {
         /* No need to init graphNode[] as they will all be filled by successive
             calls to addToGraph() */
-        graphNext[NumEntry+i] = 0;
+        graphNext[NumEntry + i] = 0;
     }
 
     numEdges = 0;
@@ -199,19 +184,19 @@ initGraph(void)
 
 /* Add an edge e between vertices v1 and v2 */
 /* e, v1, v2 are 0 based */
-static void
-addToGraph(int e, int v1, int v2)
+static void addToGraph(int e, int v1, int v2)
 {
-    e++; v1++; v2++;                        /* So much more convenient */
+    e++;
+    v1++;
+    v2++; /* So much more convenient */
 
-    graphNode[NumEntry+e] = v2;             /* Insert the edge information */
-    graphNode[NumEntry-e] = v1;
+    graphNode[NumEntry + e] = v2; /* Insert the edge information */
+    graphNode[NumEntry - e] = v1;
 
-    graphNext[NumEntry+e] = graphFirst[v1]; /* Insert v1 to list of alphas */
-    graphFirst[v1]= e;
-    graphNext[NumEntry-e] = graphFirst[v2]; /* Insert v2 to list of omegas */
-    graphFirst[v2]= -e;
-
+    graphNext[NumEntry + e] = graphFirst[v1]; /* Insert v1 to list of alphas */
+    graphFirst[v1] = e;
+    graphNext[NumEntry - e] = graphFirst[v2]; /* Insert v2 to list of omegas */
+    graphFirst[v2] = -e;
 }
 
 bool DFS(int parentE, int v)
@@ -222,25 +207,21 @@ bool DFS(int parentE, int v)
         cycles. parent and v are origin 1. Note parent is an EDGE,
         not a vertex */
 
-    visited[v] = TRUE;
+    visited[v] = true;
 
     /* For each e incident with v .. */
-    for (e = graphFirst[v]; e; e = graphNext[NumEntry+e])
-    {
+    for (e = graphFirst[v]; e; e = graphNext[NumEntry + e]) {
         byte *key1;
-        
-        getKey(abs(e)-1, &key1);
-        if (*(long *)key1 == 0)
-        {
+
+        getKey(abs(e) - 1, &key1);
+        if (*(long *)key1 == 0) {
             /* A deleted key. Just ignore it */
             continue;
         }
-        w = graphNode[NumEntry+e];
-        if (visited[w])
-        {
+        w = graphNode[NumEntry + e];
+        if (visited[w]) {
             /* Did we just come through this edge? If so, ignore it. */
-            if (abs(e) != abs(parentE))
-            {
+            if (abs(e) != abs(parentE)) {
                 /* There is a cycle in the graph. There is some subtle code here
                     to work around the distinct possibility that there may be
                     duplicate keys. Duplicate keys will always cause unit
@@ -261,137 +242,110 @@ bool DFS(int parentE, int v)
                 */
                 /* We save some stack space by calculating the parent vertex
                     for these relatively few cases where it is needed */
-                int parentV = graphNode[NumEntry-parentE];
+                int parentV = graphNode[NumEntry - parentE];
 
-                if (w == parentV)
-                {
+                if (w == parentV) {
                     byte *key2;
 
-                    getKey(abs(parentE)-1,  &key2);
-                    if (memcmp(key1, key2, EntryLen) == 0)
-                    {
-                        printf("Duplicate keys with edges %d and %d (",
-                            e, parentE);
-                        dispKey(abs(e)-1);
+                    getKey(abs(parentE) - 1, &key2);
+                    if (memcmp(key1, key2, EntryLen) == 0) {
+                        printf("Duplicate keys with edges %d and %d (", e, parentE);
+                        dispKey(abs(e) - 1);
                         printf(" & ");
-                        dispKey(abs(parentE)-1);
+                        dispKey(abs(parentE) - 1);
                         printf(")\n");
-/*                      *(long *)key1 = 0;      /* Wipe the key */
-memset(key1, 0, EntryLen);
-                    }
-                    else 
-                    {
+                        memset(key1, 0, EntryLen);
+                    } else {
                         /* A genuine (unit) cycle. */
-printf("There is a unit cycle involving vertex %d and edge %d\n", v, e);
-                        return TRUE;
+                        printf("There is a unit cycle involving vertex %d and edge %d\n", v, e);
+                        return true;
                     }
 
-                }
-                else
-                {
+                } else {
                     /* We have reached a previously visited vertex not the
                         parent. Therefore, we have uncovered a genuine cycle */
-printf("There is a cycle involving vertex %d and edge %d\n", v, e);
-                    return TRUE;
-
+                    printf("There is a cycle involving vertex %d and edge %d\n", v, e);
+                    return true;
                 }
             }
-        }
-        else                                /* Not yet seen. Traverse it */
+        } else /* Not yet seen. Traverse it */
         {
-            if (DFS(e, w))
-            {
+            if (DFS(e, w)) {
                 /* Cycle found deeper down. Exit */
-                return TRUE;
+                return true;
             }
         }
     }
-    return FALSE;
+    return false;
 }
 
-static bool
-isCycle(void)
+static bool isCycle(void)
 {
     int v;
 
-    for (v=1; v <= NumVert; v++)
-    {
-        visited[v] = FALSE;
+    for (v = 1; v <= NumVert; v++) {
+        visited[v] = false;
     }
-    for (v=1; v <= NumVert; v++)
-    {
-        if (!visited[v])
-        {
-            if (DFS(-32767, v))
-            {
-                return TRUE;
+    for (v = 1; v <= NumVert; v++) {
+        if (!visited[v]) {
+            if (DFS(-32767, v)) {
+                return true;
             }
         }
     }
-    return FALSE;
+    return false;
 }
 
-void
-traverse(int u)
+void traverse(int u)
 {
     int w, e;
 
-    visited[u] = TRUE;
+    visited[u] = true;
     /* Find w, the neighbours of u, by searching the edges e associated with u */
-    e = graphFirst[1+u];
-    while (e)
-    {
-        w = graphNode[NumEntry+e]-1;
-        if (!visited[w])
-        {
-            g[w] = (abs(e)-1 - g[u]) % NumEntry;
-            if (g[w] < 0) g[w] += NumEntry;     /* Keep these positive */
+    e = graphFirst[1 + u];
+    while (e) {
+        w = graphNode[NumEntry + e] - 1;
+        if (!visited[w]) {
+            g[w] = (abs(e) - 1 - g[u]) % NumEntry;
+            if (g[w] < 0)
+                g[w] += NumEntry; /* Keep these positive */
             traverse(w);
         }
-        e = graphNext[NumEntry+e];
+        e = graphNext[NumEntry + e];
     }
-
 }
 
-void
-assign(void)
+void assign(void)
 {
     int v;
 
-    
-    for (v=0; v < NumVert; v++)
-    {
-        g[v] = 0;                           /* g is sparse; leave the gaps 0 */
-        visited[v] = FALSE;
+    for (v = 0; v < NumVert; v++) {
+        g[v] = 0; /* g is sparse; leave the gaps 0 */
+        visited[v] = false;
     }
 
-    for (v=0; v < NumVert; v++)
-    {
-        if (!visited[v])
-        {
+    for (v = 0; v < NumVert; v++) {
+        if (!visited[v]) {
             g[v] = 0;
             traverse(v);
         }
     }
 }
 
-int
-hash(byte *string)
+int hash(byte *string)
 {
     word u, v;
-    int  j;
+    int j;
 
     u = 0;
-    for (j=0; j < EntryLen; j++)
-    {
+    for (j = 0; j < EntryLen; j++) {
         T1 = T1base + j * SetSize;
         u += T1[string[j] - SetMin];
     }
     u %= NumVert;
 
     v = 0;
-    for (j=0; j < EntryLen; j++)
-    {
+    for (j = 0; j < EntryLen; j++) {
         T2 = T2base + j * SetSize;
         v += T2[string[j] - SetMin];
     }
@@ -400,23 +354,11 @@ hash(byte *string)
     return (g[u] + g[v]) % NumEntry;
 }
 
-word *
-readT1(void)
-{
-    return T1base;
-}
+word *readT1(void) { return T1base; }
 
-word *
-readT2(void)
-{
-    return T2base;
-}
+word *readT2(void) { return T2base; }
 
-word *
-readG(void)
-{
-    return (word *)g;
-}
+word *readG(void) { return (word *)g; }
 
 #if 0
 void dispRecord(int i);

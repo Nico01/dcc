@@ -121,62 +121,61 @@ typedef struct {
 typedef SYMTAB *PSYMTAB;
 
 
-/* STACK FRAME */
+// STACK FRAME
 typedef struct {        
-	COND_EXPR	*actual;	/* Expression tree of actual parameter 		*/
-	COND_EXPR 	*regs;		/* For register arguments only				*/
-    int16       off;        /* Immediate off from BP (+:args, -:params) */
-    byte        regOff;     /* Offset is a register (e.g. SI, DI)       */
-    Int         size;       /* Size             						*/
-    hlType      type;       /* Probable type    						*/
-    word        duVal;      /* DEF, USE, VAL    						*/
-	boolT		hasMacro;	/* This type needs a macro					*/
-	char		macro[10];	/* Macro name								*/
-    char        name[10];   /* Name for this symbol/argument            */
-	boolT		invalid;	/* Boolean: invalid entry in formal arg list*/
+    COND_EXPR *actual;   // Expression tree of actual parameter
+    COND_EXPR *regs;     // For register arguments only
+    int16_t   off;       // Immediate off from BP (+:args, -:params)
+    uint8_t   regOff;    // Offset is a register (e.g. SI, DI)
+    int       size;      // Size
+    hlType    type;      // Probable type
+    uint16_t  duVal;     // DEF, USE, VAL
+    bool      hasMacro;  // This type needs a macro
+    char      macro[10]; // Macro name
+    char      name[10];  // Name for this symbol/argument
+    bool      invalid;   // Boolean: invalid entry in formal arg list
 } STKSYM;
 typedef STKSYM *PSTKSYM;
 
 typedef struct _STKFRAME {
-    Int         csym;       /* No. of symbols in table      */
-    Int         alloc;      /* Allocation                   */
-    PSTKSYM     sym;        /* Symbols                      */
-	int16		minOff;		/* Initial offset in stack frame*/
-    int16       maxOff;     /* Maximum offset in stack frame*/
-	Int			cb;			/* Number of bytes in arguments	*/
-	Int			numArgs;	/* No. of arguments in the table*/
+    int     csym;    // No. of symbols in table
+    int     alloc;   // Allocation
+    PSTKSYM sym;     // Symbols
+    int16_t minOff;  // Initial offset in stack frame
+    int16_t maxOff;  // Maximum offset in stack frame
+    int     cb;      // Number of bytes in arguments
+    int     numArgs; // No. of arguments in the table
 } STKFRAME;
 typedef STKFRAME *PSTKFRAME;
 
 
-/* PROCEDURE NODE */
+// PROCEDURE NODE
 typedef struct _proc {
-    dword        procEntry; /* label number                         	 */
-    char         name[SYMLEN]; /* Meaningful name for this proc     	 */
-    STATE        state;     /* Entry state                          	 */
-    Int          depth;     /* Depth at which we found it - for printing */
-	flags32      flg;       /* Combination of Icode & Proc flags    	 */
-    int16        cbParam;   /* Probable no. of bytes of parameters  	 */
-    STKFRAME     args;      /* Array of arguments                   	 */
-	LOCAL_ID	 localId;	/* Local identifiers						 */
-	ID			 retVal;	/* Return value - identifier				 */
+    uint32_t procEntry;    // label number
+    char     name[SYMLEN]; // Meaningful name for this proc
+    STATE    state;        // Entry state
+    int      depth;        // Depth at which we found it - for printing
+    uint32_t flg;          // Combination of Icode & Proc flags
+    int16_t  cbParam;      // Probable no. of bytes of parameters
+    STKFRAME args;         // Array of arguments
+    LOCAL_ID localId;      // Local identifiers
+    ID       retVal;       // Return value - identifier
 
-	/* Icodes and control flow graph */
-	ICODE_REC	 Icode;		/* Record of ICODE records					 */
-    PBB          cfg;       /* Ptr. to BB list/CFG                  	 */
-    PBB         *dfsLast;   /* Array of pointers to BBs in dfsLast
-                             * (reverse postorder) order            	 */
-    Int          numBBs;    /* Number of BBs in the graph cfg       	 */
-    boolT        hasCase;   /* Procedure has a case node            	 */
+    // Icodes and control flow graph
+    ICODE_REC Icode;       // Record of ICODE records
+    PBB       cfg;         // Ptr. to BB list/CFG
+    PBB       *dfsLast;    // Array of pointers to BBs in dfsLast (reverse postorder) order
+    int       numBBs;      // Number of BBs in the graph cfg
+    bool      hasCase;     // Procedure has a case node
 
-	/* For interprocedural live analysis */
-	dword		 liveIn;	/* Registers used before defined			 */
-	dword		 liveOut;	/* Registers that may be used in successors	 */
-	boolT		 liveAnal;	/* Procedure has been analysed already		 */
+    // For interprocedural live analysis
+    uint32_t liveIn;       // Registers used before defined
+    uint32_t liveOut;      // Registers that may be used in successors
+    bool     liveAnal;     // Procedure has been analysed already
 
-	/* Double-linked list */
-    struct      _proc *next;
-	struct		_proc *prev;
+    // Double-linked list
+    struct _proc *next;
+    struct _proc *prev;
 } PROC;
 typedef PROC *PPROC;
 
