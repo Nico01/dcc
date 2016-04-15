@@ -328,7 +328,7 @@ void    writeProcComments (PPROC pProc, strTable *sTab);    /* comwrite.c   */
 void    checkStartup(PSTATE pState);                        /* chklib.c     */
 void    SetupLibCheck(void);                                /* chklib.c     */
 void    CleanupLibCheck(void);                              /* chklib.c     */
-boolT   LibCheck(PPROC p);                                  /* chklib.c     */
+bool    LibCheck(PPROC p);                                  /* chklib.c     */
 
 // Exported functions from procs.c
 bool insertCallGraph(PCALL_GRAPH, PPROC, PPROC);
