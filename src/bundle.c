@@ -17,11 +17,7 @@
  *
  */
 
-/*****************************************************************************
- * File: bundle.c
- * Module that handles the bundle type (array of pointers to strings).
- * (C) Cristina Cifuentes
- ****************************************************************************/
+// Module that handles the bundle type (array of pointers to strings).
 
 #include "dcc.h"
 #include <stdarg.h>

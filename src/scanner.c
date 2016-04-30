@@ -417,7 +417,7 @@ static void rm(int i)
         break;
 
     case 1: // 1 byte disp
-        setAddress(i, true, SegPrefix, rm + INDEXBASE, (word)signex(*pInst++));
+        setAddress(i, true, SegPrefix, rm + INDEXBASE, (uint16_t)signex(*pInst++));
         break;
 
     case 2: // 2 byte disp
@@ -451,7 +451,7 @@ static void segrm(int i)
     if (reg > rDS || (reg == rCS && (stateTable[i].flg & TO_REG)))
         pIcode->ic.ll.opcode = 0;
     else {
-        setAddress(i, false, 0, (int16)reg, 0);
+        setAddress(i, false, 0, (int16_t)reg, 0);
         rm(i);
     }
 }
@@ -619,7 +619,7 @@ static void dispM(int i)
 }
 
 //dispN - 2 byte disp as immed relative to ip
-static void dispN(Int i)
+static void dispN(int i)
 {
     long off = (short)getWord(); // Signed displacement
 

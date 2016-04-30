@@ -17,11 +17,7 @@
  *
  */
 
-/*
- * (C) Mike van Emmerik
- */
-
-// Symbol table functions
+// Symbol table functions (C) Mike van Emmerik
 
 /*
  This file implements a symbol table with a symbolic name, a symbol value (word), and a procedure number.
@@ -303,10 +299,12 @@ uint16_t findBlankSym(char *symName)
         if (symTab[j].pSymName == 0) {
             return j; // Empty entry. Terminate probing
         }
-        j = (++j) % tableSize; // Linear probing
+        uint16_t tmp = (++j) % tableSize; // Linear probing
+        j = tmp;
     } while (j != h);
 
     printf("Could not find blank entry in table! Num entries is %d of %d\n", numEntry, tableSize);
+    return 0;
 }
 
 
@@ -380,7 +378,8 @@ void deleteSym(char *symName)
 
     // Delete from value hashed table
     if (!findVal(symOff, symProc, &i)) {
-        printf("Could not delete non existant symbol off %04X proc %d\n", symOff, symProc);
+        printf("Could not delete non existant symbol off %04X proc %d\n", symOff,
+                symProc->procEntry);
         exit(1);
     }
 

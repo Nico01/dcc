@@ -17,10 +17,7 @@
  *
  */
 
-/*
- Fix Wildcards
- (C) Mike van Emmerik
-*/
+// Fix Wildcards (C) Mike van Emmerik
 
 // Fix Wild Cards Code
 

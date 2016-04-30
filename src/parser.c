@@ -18,26 +18,34 @@
  *
  */
 
-/****************************************************************************
- *          dcc project procedure list builder
- * (C) Cristina Cifuentes, Mike van Emmerik, Jeff Ledermann
- ****************************************************************************/
+/*
+ dcc project procedure list builder
+ (C) Cristina Cifuentes, Mike van Emmerik, Jeff Ledermann
+*/
 
 #include "dcc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+// duVal FLAGS
+#define DEF 0x0010    // Variable was first defined than used
+#define USE 0x0100    // Variable was first used than defined
+#define VAL 0x1000    /* Variable has an initial value.  2 cases:
+                         1. When variable is used first (ie. global)
+                         2. When a value is moved into the variable for the first time. */
+#define USEVAL 0x1100 // Use and Val
+
 static void FollowCtrl(PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate);
 static bool process_JMP(PICODE pIcode, PPROC pProc, PSTATE pstate, PCALL_GRAPH pcallGraph);
 static bool process_CALL(PICODE pIcode, PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate);
-static void process_operands(PICODE pIcode, PPROC pProc, PSTATE pstate, Int ix);
+static void process_operands(PICODE pIcode, PPROC pProc, PSTATE pstate, int ix);
 static void setBits(int16_t type, uint32_t start, uint32_t len);
-static PSYM updateGlobSym(dword operand, int size, uint16_t duFlag);
+static PSYM updateGlobSym(uint32_t operand, int size, uint16_t duFlag);
 static void process_MOV(PICODE pIcode, PSTATE pstate);
 static PSYM lookupAddr(PMEM pm, PSTATE pstate, int size, uint16_t duFlag);
 void interactDis(PPROC initProc, int ic);
-static dword SynthLab;
+static uint32_t SynthLab;
 
 // Parses the program, builds the call graph, and returns the list of procedures found
 void parse(PCALL_GRAPH *pcallGraph)
@@ -107,9 +115,9 @@ static void updateSymType(uint32_t symbol, hlType symType, int size)
 }
 
 // Returns the size of the string pointed by sym and delimited by delim. Size includes delimiter.
-int strSize(uint8_t *sym, char delim)
+size_t strSize(uint8_t *sym, char delim)
 {
-    int i;
+    size_t i;
 
     for (i = 0; *sym++ != delim; i++);
 
@@ -249,7 +257,7 @@ static void FollowCtrl(PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
             /* This sets up range check for indexed JMPs hopefully
                Handles JA/JAE for fall through and JB/JBE on branch */
             if (ip > 0 && prev->ic.ll.opcode == iCMP && (prev->ic.ll.flg & I)) {
-                pstate->JCond.immed = (int16)prev->ic.ll.immed.op;
+                pstate->JCond.immed = (int16_t)prev->ic.ll.immed.op;
                 
                 if (Icode.ic.ll.opcode == iJA || Icode.ic.ll.opcode == iJBE)
                     pstate->JCond.immed++;
@@ -295,7 +303,7 @@ static void FollowCtrl(PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
             if (Icode.ic.ll.immed.op == 0x21 && pstate->f[rAH]) {
                 int funcNum = pstate->r[rAH];
                 int operand;
-                int size;
+                size_t size;
 
                 // Save function number
                 pProc->Icode.icode[pProc->Icode.numIcode - 1].ic.ll.dst.off = funcNum;
@@ -348,7 +356,7 @@ static void FollowCtrl(PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
                 offset = LH(&prog.Image[psym->label]);
                 setState(pstate, (Icode.ic.ll.opcode == iLDS) ? rDS : rES,
                          LH(&prog.Image[psym->label + 2]));
-                setState(pstate, Icode.ic.ll.dst.regi, (int16)offset);
+                setState(pstate, Icode.ic.ll.dst.regi, (int16_t)offset);
                 psym->type = TYPE_PTR;
             }
             break;
@@ -564,6 +572,7 @@ static bool process_CALL(PICODE pIcode, PPROC pProc, PCALL_GRAPH pcallGraph, PST
 
         return false;
     }
+    return false;
 }
 
 // process_MOV - Handles state changes due to simple assignments
@@ -575,7 +584,7 @@ static void process_MOV(PICODE pIcode, PSTATE pstate)
 
     if (dstReg > 0 && dstReg < INDEXBASE) {
         if (pIcode->ic.ll.flg & I)
-            setState(pstate, dstReg, (int16)pIcode->ic.ll.immed.op);
+            setState(pstate, dstReg, (int16_t)pIcode->ic.ll.immed.op);
         else if (srcReg == 0) { // direct memory offset
             psym = lookupAddr(&pIcode->ic.ll.src, pstate, 2, USE);
             if (psym && ((psym->flg & SEG_IMMED) || (psym->duVal & VAL)))
@@ -589,23 +598,24 @@ static void process_MOV(PICODE pIcode, PSTATE pstate)
         }
     } else if (dstReg == 0) { // direct memory offset
         psym = lookupAddr(&pIcode->ic.ll.dst, pstate, 2, DEF);
-        if (psym && !(psym->duVal & VAL)) // no initial value yet
+        if (psym && !(psym->duVal & VAL)) { // no initial value yet
             if (pIcode->ic.ll.flg & I) {  // immediate
-                prog.Image[psym->label] = (byte)pIcode->ic.ll.immed.op;
-                prog.Image[psym->label + 1] = (byte)(pIcode->ic.ll.immed.op >> 8);
+                prog.Image[psym->label] = (uint8_t)pIcode->ic.ll.immed.op;
+                prog.Image[psym->label + 1] = (uint8_t)(pIcode->ic.ll.immed.op >> 8);
                 psym->duVal |= VAL;
             } else if (srcReg == 0) { // direct mem offset
                 psym2 = lookupAddr(&pIcode->ic.ll.src, pstate, 2, USE);
                 if (psym2 && ((psym->flg & SEG_IMMED) || (psym->duVal & VAL))) {
-                    prog.Image[psym->label] = (byte)prog.Image[psym2->label];
-                    prog.Image[psym->label + 1] = (byte)(prog.Image[psym2->label + 1] >> 8);
+                    prog.Image[psym->label] = (uint8_t)prog.Image[psym2->label];
+                    prog.Image[psym->label + 1] = (uint8_t)(prog.Image[psym2->label + 1] >> 8);
                     psym->duVal |= VAL;
                 }
             } else if (srcReg < INDEXBASE && pstate->f[srcReg]) { // reg
-                prog.Image[psym->label] = (byte)pstate->r[srcReg];
-                prog.Image[psym->label + 1] = (byte)(pstate->r[srcReg] >> 8);
+                prog.Image[psym->label] = (uint8_t)pstate->r[srcReg];
+                prog.Image[psym->label + 1] = (uint8_t)(pstate->r[srcReg] >> 8);
                 psym->duVal |= VAL;
             }
+        }
     }
 }
 
@@ -843,7 +853,7 @@ static void use(opLoc d, PICODE pIcode, PPROC pProc, PSTATE pstate, int size, in
         }
         else if (pm->regi == INDEXBASE + 2 || pm->regi == INDEXBASE + 3) {
             newByteWordStkId(&pProc->localId, TYPE_WORD_SIGN, pm->off,
-                             (byte)((pm->regi == INDEXBASE + 2) ? rSI : rDI));
+                             (uint8_t)((pm->regi == INDEXBASE + 2) ? rSI : rDI));
         }
         else if ((pm->regi >= INDEXBASE + 4) && (pm->regi <= INDEXBASE + 7)) {
             if ((pm->seg == rDS) && (pm->regi == INDEXBASE + 7)) { // bx
@@ -853,7 +863,7 @@ static void use(opLoc d, PICODE pIcode, PPROC pProc, PSTATE pstate, int size, in
             pIcode->du.use |= duReg[pm->regi];
         }
         else if ((psym = lookupAddr(pm, pstate, size, USE))) {
-            setBits(BM_DATA, psym->label, (dword)size);
+            setBits(BM_DATA, psym->label, (uint32_t)size);
             pIcode->ic.ll.flg |= SYM_USE;
             pIcode->ic.ll.caseTbl.numEntries = psym - symtab.sym;
         }
@@ -891,7 +901,7 @@ static void def(opLoc d, PICODE pIcode, PPROC pProc, PSTATE pstate, int size, in
             pIcode->du.use |= duReg[pm->regi];
         }
         else if ((psym = lookupAddr(pm, pstate, size, DEF))) {
-            setBits(BM_DATA, psym->label, (dword)size);
+            setBits(BM_DATA, psym->label, (uint32_t)size);
             pIcode->ic.ll.flg |= SYM_DEF;
             pIcode->ic.ll.caseTbl.numEntries = psym - symtab.sym;
         }

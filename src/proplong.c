@@ -18,10 +18,8 @@
  */
 
 /*
- File : propLong.c
  Purpose: propagate the value of long variables (local variables and registers) along the graph.
  Structure the graph in this way.
- (C) Cristina Cifuentes
 */
 
 #include "dcc.h"
@@ -278,7 +276,6 @@ static void propLongStk(int i, ID *pLocId, PPROC pProc)
     int idx, off, arc;
     COND_EXPR *lhs, *rhs;     // Pointers to left and right hand expression
     PICODE pIcode, pEnd;
-    PBB pbb, tbb, obb1, obb2; // Pointers to basic blocks in long conditions
 
     // Check all icodes for offHi:offLo
     pEnd = &pProc->Icode.icode[pProc->Icode.numIcode - 1];
@@ -289,6 +286,7 @@ static void propLongStk(int i, ID *pLocId, PPROC pProc)
 
         if (pIcode->ic.ll.opcode == (pIcode + 1)->ic.ll.opcode) {
             switch (pIcode->ic.ll.opcode) {
+            default: break;
             case iMOV:
                 if (checkLongEq(pLocId->id.longStkId, pIcode, i, idx, pProc, &rhs, &lhs, 1) == true) {
                     newAsgnHlIcode(pIcode, lhs, rhs);
@@ -302,6 +300,7 @@ static void propLongStk(int i, ID *pLocId, PPROC pProc)
             case iXOR:
                 if (checkLongEq(pLocId->id.longStkId, pIcode, i, idx, pProc, &rhs, &lhs, 1) == true) {
                     switch (pIcode->ic.ll.opcode) {
+                    default: break;
                     case iAND:
                         rhs = boolCondExp(lhs, rhs, AND);
                         break;
@@ -371,6 +370,7 @@ static void propLongReg(int i, ID *pLocId, PPROC pProc)
 
             if (pIcode->ic.ll.opcode == (pIcode + 1)->ic.ll.opcode)
                 switch (pIcode->ic.ll.opcode) {
+                default: break;
                 case iMOV:
                     pmH = &pIcode->ic.ll.dst;
                     pmL = &(pIcode + 1)->ic.ll.dst;
@@ -409,6 +409,7 @@ static void propLongReg(int i, ID *pLocId, PPROC pProc)
                         setRegDU(pIcode, pmH->regi, USE_DEF);
                         rhs = idCondExpLong(&pProc->localId, SRC, pIcode, LOW_FIRST, idx, USE, 1);
                         switch (pIcode->ic.ll.opcode) {
+                        default: break;
                         case iAND:
                             rhs = boolCondExp(lhs, rhs, AND);
                             break;
@@ -436,6 +437,7 @@ static void propLongReg(int i, ID *pLocId, PPROC pProc)
 
                 if (pIcode->ic.ll.opcode == (pIcode + 1)->ic.ll.opcode)
                     switch (pIcode->ic.ll.opcode) {
+                    default: break;
                     case iMOV:
                         if ((pLocId->id.longId.h == pIcode->ic.ll.src.regi) &&
                             (pLocId->id.longId.l == (pIcode + 1)->ic.ll.src.regi)) {
@@ -473,6 +475,7 @@ static void propLongReg(int i, ID *pLocId, PPROC pProc)
                             rhs =
                                 idCondExpLong(&pProc->localId, SRC, pIcode, LOW_FIRST, idx, USE, 1);
                             switch (pIcode->ic.ll.opcode) {
+                            default: break;
                             case iAND:
                                 rhs = boolCondExp(lhs, rhs, AND);
                                 break;

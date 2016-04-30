@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <stdarg.h>
 
 #define NIL -1                // Used like NULL, but 0 is valid
 #define NUM_PLIST 64          // Number of entries to increase allocation by

@@ -20,12 +20,7 @@
  *
  */
 
-/*
- * File: locIdent.h
- * Purpose: High-level local identifier definitions
- * Date: October 1993
- * (C) Cristina Cifuentes
- */
+// Purpose: High-level local identifier definitions
 
 #include <stdint.h>
 #include <stdbool.h>

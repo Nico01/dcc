@@ -20,10 +20,7 @@
  *
  */
 
-/*
-   CFG, BB and interval related definitions
-   (C) Cristina Cifuentes
-*/
+// CFG, BB and interval related definitions
 
 // Types of basic block nodes
 // Real basic blocks: type defined according to their out-edges

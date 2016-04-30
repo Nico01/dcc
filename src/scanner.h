@@ -20,10 +20,7 @@
  *
  */
 
-/*
- Scanner functions
- (C) Cristina Cifuentes, Jeff Ledermann
-*/
+// Scanner functions. (C) Cristina Cifuentes, Jeff Ledermann
 
 static void rm(int i);
 static void modrm(int i);
@@ -56,7 +53,7 @@ static void none2(int i);
 static void checkInt(int i);
 
 // Extracts reg bits from middle of mod-reg-rm byte
-#define REG(x)  ((byte)(x & 0x38) >> 3)
+#define REG(x)  ((uint8_t)(x & 0x38) >> 3)
 
 #endif // SCANNER_H
 

@@ -17,10 +17,7 @@
  *
  */
 
-/*
- dcc project error messages
- (C) Cristina Cifuentes
-*/
+// dcc project error messages
 
 #include "dcc.h"
 #include <stdio.h>

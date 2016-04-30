@@ -17,10 +17,10 @@
  *
  */
 
-/****************************************************************************
- *          dcc project disassembler
- * (C) Cristina Cifuentes, Mike van Emmerik, Jeff Ledermann
- ****************************************************************************/
+/*
+ dcc project disassembler
+ (C) Cristina Cifuentes, Mike van Emmerik, Jeff Ledermann
+*/
 
 #include <ncurses.h>
 
@@ -119,13 +119,13 @@ static char *szPtr[2] = { " word ptr ", " byte ptr " };
 
 static void dis1Line(int i, bool fWin, chtype attr, int pass);
 void dis1LineOp(int i, bool fWin, chtype attr, uint16_t *len, PPROC pProc);
-static void formatRM(char *p, flags32 flg, PMEM pm);
-static char *strDst(flags32 flg, PMEM pm);
+static void formatRM(char *p, uint32_t flg, PMEM pm);
+static char *strDst(uint32_t flg, PMEM pm);
 static char *strSrc(PICODE pc);
 static char *strHex(uint32_t d);
 static int checkScanned(uint32_t pcCur);
 static void setProc(PPROC proc);
-static void dispData(word dataSeg);
+static void dispData(uint16_t dataSeg);
 static void flops(PICODE pi);
 bool callArg(uint16_t off, char *temp); // Check for procedure name
 
@@ -257,7 +257,7 @@ static void dis1Line(int i, bool fWindow, chtype attr, int pass)
     if (pIcode->ic.ll.flg & SYNTHETIC)
         nextInst = pIcode->ic.ll.label;
     else {
-        cb = (dword)pIcode->ic.ll.numBytes;
+        cb = (uint32_t)pIcode->ic.ll.numBytes;
         nextInst = pIcode->ic.ll.label + cb;
 
         if (pass != 3) { // Output hexa code in program image
@@ -502,7 +502,7 @@ static void dis1Line(int i, bool fWindow, chtype attr, int pass)
     if (pIcode->ic.ll.flg & SYNTHETIC) {
         fImpure = FALSE;
     } else {
-        for (j = pIcode->ic.ll.label, fImpure = 0; j > 0 && j < (Int)nextInst; j++) {
+        for (j = pIcode->ic.ll.label, fImpure = 0; j > 0 && j < (int)nextInst; j++) {
             fImpure |= BITMAP(j, BM_DATA);
         }
     }
@@ -566,7 +566,7 @@ static void dis1Line(int i, bool fWindow, chtype attr, int pass)
 
 
 // formatRM
-static void formatRM(char *p, flags32 flg, PMEM pm)
+static void formatRM(char *p, uint32_t flg, PMEM pm)
 {
     char seg[4];
 
@@ -576,7 +576,7 @@ static void formatRM(char *p, flags32 flg, PMEM pm)
         *seg = '\0';
 
     if (pm->regi == 0) {
-        sprintf(p, "%s[%s]", seg, strHex((dword)pm->off));
+        sprintf(p, "%s[%s]", seg, strHex((uint32_t)pm->off));
     }
 
     else if (pm->regi == (INDEXBASE - 1)) {
@@ -589,9 +589,9 @@ static void formatRM(char *p, flags32 flg, PMEM pm)
 
     else if (pm->off) {
         if (pm->off < 0) {
-            sprintf(p, "%s[%s-%s]", seg, szIndex[pm->regi - INDEXBASE], strHex((dword)(-pm->off)));
+            sprintf(p, "%s[%s-%s]", seg, szIndex[pm->regi - INDEXBASE], strHex((uint32_t)(-pm->off)));
         } else {
-            sprintf(p, "%s[%s+%s]", seg, szIndex[pm->regi - INDEXBASE], strHex((dword)pm->off));
+            sprintf(p, "%s[%s+%s]", seg, szIndex[pm->regi - INDEXBASE], strHex((uint32_t)pm->off));
         }
     } else
         sprintf(p, "%s[%s]", seg, szIndex[pm->regi - INDEXBASE]);
@@ -599,7 +599,7 @@ static void formatRM(char *p, flags32 flg, PMEM pm)
 
 
 // strDst
-static char *strDst(flags32 flg, PMEM pm)
+static char *strDst(uint32_t flg, PMEM pm)
 {
     static char buf[30];
 
@@ -857,7 +857,7 @@ static void setProc(PPROC proc)
         if ((pc[i].ic.ll.flg & I) && !(pc[i].ic.ll.flg & JMP_ICODE) &&
             JmpInst(pc[i].ic.ll.opcode)) {
             // Immediate jump instructions. Make dest an icode index
-            if (labelSrch(pc, numIcode, pc[i].ic.ll.immed.op, (Int *)&pc[i].ic.ll.immed.op)) {
+            if (labelSrch(pc, numIcode, pc[i].ic.ll.immed.op, (int *)&pc[i].ic.ll.immed.op)) {
                 // This icode is the target of a jump
                 pc[pc[i].ic.ll.immed.op].ic.ll.flg |= TARGET;
                 pc[i].ic.ll.flg |= JMP_ICODE; // So its not done twice
@@ -938,7 +938,7 @@ void interactDis(PPROC initProc, int initIC)
         case KEY_UP:
             // First simply try the prev icode
             if ((icCur == 0) ||
-                pc[--icCur].ic.ll.label + (uint32_t)pc[icCur].ic.ll.numBytes != pcCur) {
+                (pc[icCur - 1].ic.ll.label + (uint32_t)pc[icCur].ic.ll.numBytes) != pcCur) {
                 for (i = 0; i < numIcode; i++) {
                     if (pc[i].ic.ll.label + (uint32_t)pc[i].ic.ll.numBytes == pcCur) {
                         break; // This is the one!
@@ -1028,7 +1028,7 @@ void interactDis(PPROC initProc, int initIC)
             pcTop -= (LINES - 2) * 2; // Average of 2 bytes per inst
             for (i = 0; i < numIcode; i++) {
                 if ((pc[i].ic.ll.label <= pcTop) &&
-                    (pc[i].ic.ll.label + (dword)pc[i].ic.ll.numBytes >= pcTop)) {
+                    (pc[i].ic.ll.label + (uint32_t)pc[i].ic.ll.numBytes >= pcTop)) {
                     break; // This is the spot! */
                 }
             }
@@ -1188,7 +1188,7 @@ bool callArg(uint16_t off, char *sym)
 {
     PPROC p, pPrev;
 
-    uint32_t imageOff = off + ((dword)pProc->state.r[rCS] << 4);
+    uint32_t imageOff = off + ((uint32_t)pProc->state.r[rCS] << 4);
 
     // Search procedure list for one with appropriate entry point
     for (p = pProcList; p && p->procEntry != imageOff; p = p->next) {

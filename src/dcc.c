@@ -20,7 +20,6 @@
 /*
  dcc decompiler
  Reads the command line switches and then executes each major section in turn
- (C) Cristina Cifuentes
 */
 
 #include "dcc.h"

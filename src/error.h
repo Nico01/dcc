@@ -20,11 +20,7 @@
  *
  */
 
-/*
- Error codes
- (C) Cristina Cifuentes
-*/
-
+// Error codes
 
 // These definitions refer to errorMessage in error.c
 typedef enum {

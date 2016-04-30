@@ -1,5 +1,5 @@
 CC = clang
-CFLAGS += -Wall -Wno-switch-enum
+CFLAGS += -Wall -g
 LDFLAGS += -lncurses
 
 SOURCES  := $(wildcard *.c)

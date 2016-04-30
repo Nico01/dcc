@@ -17,10 +17,7 @@
  *
  */
 
-/*
-   dcc project CFG related functions
-   (C) Cristina Cifuentes
-*/
+// dcc project CFG related functions
 
 #include "dcc.h"
 #include <malloc.h>
@@ -85,7 +82,7 @@ PBB createCFG(PPROC pProc)
                 pBB = newBB(pBB, start, ip, TWO_BRANCH, 2, pProc);
             CondJumps:
                 start = ip + 1;
-                pBB->edges[0].ip = (dword)start;
+                pBB->edges[0].ip = (uint32_t)start;
                 // This is for jumps off into nowhere
                 if (pIcode->ic.ll.flg & NO_LABEL)
                     pBB->numOutEdges--;
@@ -125,7 +122,7 @@ PBB createCFG(PPROC pProc)
                 pBB = newBB(pBB, start, ip, CALL_NODE, i, pProc);
                 start = ip + 1;
                 if (i)
-                    pBB->edges[0].ip = (dword)start;
+                    pBB->edges[0].ip = (uint32_t)start;
             } break;
 
             case iRET:
@@ -144,7 +141,7 @@ PBB createCFG(PPROC pProc)
                 else if (pProc->Icode.icode[ip + 1].ic.ll.flg & (TARGET | CASE)) {
                     pBB = newBB(pBB, start, ip, FALL_NODE, 1, pProc);
                     start = ip + 1;
-                    pBB->edges[0].ip = (dword)start;
+                    pBB->edges[0].ip = (uint32_t)start;
                 }
                 break;
             }
@@ -181,7 +178,7 @@ PBB newBB(PBB pBB, int start, int ip, uint8_t nodeType, int numOutEdges, PPROC p
     pnewBB->nodeType = nodeType; // Initialise
     pnewBB->start = start;
     pnewBB->length = ip - start + 1;
-    pnewBB->numOutEdges = (byte)numOutEdges;
+    pnewBB->numOutEdges = (uint8_t)numOutEdges;
     pnewBB->immedDom = NO_DOM;
     pnewBB->loopHead = pnewBB->caseHead = pnewBB->caseTail = pnewBB->latchNode =
         pnewBB->loopFollow = NO_NODE;
@@ -296,7 +293,7 @@ static PBB rmJMP(PPROC pProc, int marker, PBB pBB)
             pBB = pBB->edges[0].BBptr;
         } else { // We are going around in circles
             pBB->nodeType = NOWHERE_NODE;
-            pProc->Icode.icode[pBB->start].ic.ll.immed.op = (dword)pBB->start;
+            pProc->Icode.icode[pBB->start].ic.ll.immed.op = (uint32_t)pBB->start;
             do {
                 pBB = pBB->edges[0].BBptr;
                 if (!--pBB->numInEdges) {

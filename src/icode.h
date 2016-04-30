@@ -20,10 +20,7 @@
  *
  */
 
-/*****************************************************************************
-   I-code related definitions
-   (C) Cristina Cifuentes
- ****************************************************************************/
+// I-code related definitions
 
 // LOW_LEVEL icode flags
 #define B 0x000001          // Byte operands (value implicitly used)
@@ -308,7 +305,7 @@ typedef struct {
                 uint32_t op;                // idx of immed src op
                 struct {                    // Call & # actual arg bytes
                     struct _proc *proc;     // ^ target proc (for CALL(F))
-                    Int cb;                 // # actual arg bytes
+                    int cb;                 // # actual arg bytes
                 } proc;
             } immed;
             DU flagDU;                      // def/use of flags

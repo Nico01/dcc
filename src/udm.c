@@ -21,7 +21,6 @@
  dcc project Universal Decompilation Module
  This is supposedly a machine independant and language independant module
  that just plays with abstract cfg's and intervals and such like.
- (C) Cristina Cifuentes
 */
 
 #include "dcc.h"

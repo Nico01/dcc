@@ -17,12 +17,7 @@
  *
  */
 
-/*
- * File: locIdent.c
- * Purpose: support routines for high-level local identifier definitions.
- * Date: October 1993
- * (C) Cristina Cifuentes
- */
+// Purpose: support routines for high-level local identifier definitions.
 
 #include "dcc.h"
 #include <string.h>

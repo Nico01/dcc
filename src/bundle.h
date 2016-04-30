@@ -20,12 +20,7 @@
  *
  */
 
-/*****************************************************************************
- * Project: dcc
- * File:    bundle.h
- * Purpose: Module to handle the bundle type (array of pointers to strings).
- * (C) Cristina Cifuentes
- ****************************************************************************/
+// Module to handle the bundle type (array of pointers to strings).
 
 #include <stdio.h>
 

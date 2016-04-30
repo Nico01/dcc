@@ -17,12 +17,7 @@
  *
  */
 
-/*
- * File:    procs.c
- * Purpose: Functions to support Call graphs and procedures
- * Date:    November 1993
- * (C) Cristina Cifuentes
- */
+// Purpose: Functions to support Call graphs and procedures
 
 #include "dcc.h"
 #include <string.h>
@@ -196,6 +191,7 @@ void newRegArg(PPROC pproc, PICODE picode, PICODE ticode)
 
     // Mask off high and low register(s) in picode
     switch (type) {
+    default: break;
     case REGISTER:
         id = &pproc->localId.id[lhs->expr.ident.idNode.regiIdx];
         picode->du.def &= maskDuReg[id->id.regi];
@@ -245,11 +241,13 @@ bool newStkArg(PICODE picode, COND_EXPR *exp, llIcode opcode, PPROC pproc)
     if (exp) {
         if ((exp->type == IDENTIFIER) && (exp->expr.ident.idType == REGISTER)) {
             regi = pproc->localId.id[exp->expr.ident.idNode.regiIdx].id.regi;
-            if ((regi >= rES) && (regi <= rDS))
+            if ((regi >= rES) && (regi <= rDS)) {
                 if (opcode == iCALLF)
+
                     return false;
                 else
                     return true;
+            }
         }
     }
 
@@ -265,7 +263,6 @@ bool newStkArg(PICODE picode, COND_EXPR *exp, llIcode opcode, PPROC pproc)
     return false;
 }
 
-
 // Places the actual argument exp in the position given by pos in the argument list of picode.
 void placeStkArg(PICODE picode, COND_EXPR *exp, int pos)
 {
@@ -273,7 +270,7 @@ void placeStkArg(PICODE picode, COND_EXPR *exp, int pos)
 
     ps = picode->ic.hl.oper.call.args;
     ps->sym[pos].actual = exp;
-    sprintf(ps->sym[pos].name, "arg%ld", pos);
+    sprintf(ps->sym[pos].name, "arg%d", pos);
 }
 
 
@@ -284,7 +281,7 @@ void placeStkArg(PICODE picode, COND_EXPR *exp, int pos)
 void adjustActArgType(COND_EXPR *exp, hlType forType, PPROC pproc)
 {
     hlType actType;
-    Int offset, offL, size;
+    int offset, offL;
 
     if (exp == NULL)
         return;
@@ -292,6 +289,7 @@ void adjustActArgType(COND_EXPR *exp, hlType forType, PPROC pproc)
     actType = expType(exp, pproc);
     if ((actType != forType) && (exp->type == IDENTIFIER)) {
         switch (forType) {
+        default: break;
         case TYPE_UNKNOWN:
         case TYPE_BYTE_SIGN:
         case TYPE_BYTE_UNSIGN:
@@ -308,6 +306,7 @@ void adjustActArgType(COND_EXPR *exp, hlType forType, PPROC pproc)
 
         case TYPE_STR:
             switch (actType) {
+            default: break;
             case TYPE_CONST:
                 // It's an offset into image where a string is found. Point to the string.
                 offL = exp->expr.ident.idNode.kte.kte;
@@ -367,6 +366,7 @@ void adjustForArgType(PSTKFRAME pstkFrame, int numArg, hlType actType)
     forType = psym->type;
     if (forType != actType) {
         switch (actType) {
+        default: break;
         case TYPE_UNKNOWN:
         case TYPE_BYTE_SIGN:
         case TYPE_BYTE_UNSIGN:

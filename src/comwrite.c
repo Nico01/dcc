@@ -17,12 +17,7 @@
  *
  */
 
-/*****************************************************************************
- * File: comwrite.c
- * Purpose: writes comments about C programs and descriptions about dos
- * interrupts in the string line given.
- * Project: dcc (C) Cristina Cifuentes
- ****************************************************************************/
+// Writes comments about C programs and descriptions about dos interrupts in the string line given.
 
 #include "dcc.h"
 #include <stdlib.h>
@@ -168,10 +163,10 @@ void writeIntComment(PICODE icode, char *s)
     char *t = malloc(intSize * sizeof(char));
 
     if (icode->ic.ll.immed.op == 0x21) {
-        t = sprintf(t, "\t/* %s */\n", int21h[icode->ic.ll.dst.off]);
+        sprintf(t, "\t/* %s */\n", int21h[icode->ic.ll.dst.off]);
         strcat(s, t);
     } else if (icode->ic.ll.immed.op > 0x1F && icode->ic.ll.immed.op < 0x2F) {
-        t = sprintf(t, "\t/* %s */\n", intOthers[icode->ic.ll.immed.op - 0x20]);
+        sprintf(t, "\t/* %s */\n", intOthers[icode->ic.ll.immed.op - 0x20]);
         strcat(s, t);
     } else if (icode->ic.ll.immed.op == 0x2F)
         switch (icode->ic.ll.dst.off) {
@@ -242,7 +237,8 @@ void writeProcComments(PPROC p, strTable *strTab)
             case TYPE_LONG_UNSIGN:
                 appendStrTab(strTab, " * Return value in registers dx:ax.\n");
                 break;
-            } // eos
+            default: break;
+            }
     }
 
     // Calling convention

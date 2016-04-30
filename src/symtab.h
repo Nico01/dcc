@@ -20,10 +20,7 @@
  *
  */
 
-/*
-   Symbol table prototypes
-   (C) Mike van Emmerik
-*/
+// Symbol table prototypes (C) Mike van Emmerik
 
 #include "dcc.h"
 
