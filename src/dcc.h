@@ -48,7 +48,7 @@
 
 // Macro reads a LH word from the image regardless of host convention
 // Returns a signed quantity, e.g. C000 is read into an Int as FFFFC000
-#define LHS(p) (((byte *)(p))[0] + (((char *)(p))[1] << 8))
+#define LHS(p) (((uint8_t *)(p))[0] + (((char *)(p))[1] << 8))
 
 // Macro tests bit b for type t in prog.map
 #define BITMAP(b, t) (prog.map[(b) >> 2] & ((t) << (((b)&3) << 1)))

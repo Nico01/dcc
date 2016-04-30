@@ -148,7 +148,7 @@ void SetupLibCheck(void)
     if (memcmp("T1", buf, 2) != 0)
         dcc_error("Expected 'T1'\n");
 
-    len = PatLen * 256 * sizeof(word);
+    len = PatLen * 256 * sizeof(uint16_t);
     w = readFileShort(f);
 
     if (w != len)
@@ -351,7 +351,7 @@ bool locatePattern(uint8_t *source, int iMin, int iMax, uint8_t *pattern, int iP
 
 
 // Start Patterns (Vendor id)
-static byte pattMsC5Start[] = {
+static uint8_t pattMsC5Start[] = {
     0xB4, 0x30, // Mov ah, 30
     0xCD, 0x21, // int 21 (dos version number)
     0x3C, 0x02, // cmp al, 2
@@ -360,7 +360,7 @@ static byte pattMsC5Start[] = {
     0xBF        // Mov di, DSEG
 };
 
-static byte pattMsC8Start[] = {
+static uint8_t pattMsC8Start[] = {
     0xB4, 0x30, // Mov ah, 30
     0xCD, 0x21, // int 21
     0x3C, 0x02, // cmp al,2
@@ -371,7 +371,7 @@ static byte pattMsC8Start[] = {
     0xBF        // mov di, DSEG
 };
 
-static byte pattMsC8ComStart[] = {
+static uint8_t pattMsC8ComStart[] = {
     0xB4, 0x30, // Mov ah, 30
     0xCD, 0x21, // int 21 (dos version number)
     0x3C, 0x02, // cmp al, 2
@@ -380,7 +380,7 @@ static byte pattMsC8ComStart[] = {
     0x8C, 0xDF  // Mov di, ds
 };
 
-static byte pattBorl2Start[] = {
+static uint8_t pattBorl2Start[] = {
     0xBA, WILD, WILD,       // Mov dx, dseg
     0x2E, 0x89, 0x16,       // mov cs:[], dx
     WILD, WILD, 0xB4, 0x30, // mov ah, 30
@@ -395,7 +395,7 @@ static byte pattBorl2Start[] = {
     0xC7                    // mov [xx], -1
 };
 
-static byte pattBorl3Start[] = {
+static uint8_t pattBorl3Start[] = {
     0xBA, WILD, WILD,       // Mov dx, dseg
     0x2E, 0x89, 0x16,       // mov cs:[], dx
     WILD, WILD, 0xB4, 0x30, // mov ah, 30
@@ -410,11 +410,11 @@ static byte pattBorl3Start[] = {
     0xE8                    // call ...
 };
 
-static byte pattBorl4on[] = {
+static uint8_t pattBorl4on[] = {
     0x9A, 0, 0, WILD, WILD // Call init (offset always 0)
 };
 
-static byte pattBorl4Init[] = {
+static uint8_t pattBorl4Init[] = {
     0xBA, WILD, WILD,       // Mov dx, dseg
     0x8E, 0xDA,             // mov ds, dx
     0x8C, 0x06, WILD, WILD, // mov [xx], es
@@ -425,7 +425,7 @@ static byte pattBorl4Init[] = {
     0x8C, 0xD2              // mov dx, ss
 };
 
-static byte pattBorl5Init[] = {
+static uint8_t pattBorl5Init[] = {
     0xBA, WILD, WILD,    // Mov dx, dseg
     0x8E, 0xDA,          // mov ds, dx
     0x8C, 0x06, 0x30, 0, // mov [0030], es
@@ -437,7 +437,7 @@ static byte pattBorl5Init[] = {
     0x8C, 0xD2           // mov dx, ss
 };
 
-static byte pattBorl7Init[] = {
+static uint8_t pattBorl7Init[] = {
     0xBA, WILD, WILD,    // Mov dx, dseg
     0x8E, 0xDA,          // mov ds, dx
     0x8C, 0x06, 0x30, 0, // mov [0030], es
@@ -450,7 +450,7 @@ static byte pattBorl7Init[] = {
     0x8C, 0xD2           // mov dx, ss
 };
 
-static byte pattLogiStart[] = {
+static uint8_t pattLogiStart[] = {
     0xEB, 0x04,       // jmp short $+6
     WILD, WILD,       // Don't know what this is
     WILD, WILD,       // Don't know what this is
@@ -458,7 +458,7 @@ static byte pattLogiStart[] = {
     0x8E, 0xD8        // mov ds, ax
 };
 
-static byte pattTPasStart[] = {
+static uint8_t pattTPasStart[] = {
     0xE9, 0x79, 0x2C // Jmp 2D7C - Turbo pascal 3.0
 };
 
@@ -466,7 +466,7 @@ static byte pattTPasStart[] = {
 // Main Patterns (Model id)
 
 // This pattern works for MS and Borland, small and tiny model
-static byte pattMainSmall[] = {
+static uint8_t pattMainSmall[] = {
     0xFF, 0x36, WILD, WILD, // Push environment pointer
     0xFF, 0x36, WILD, WILD, // Push argv
     0xFF, 0x36, WILD, WILD, // Push argc
@@ -476,7 +476,7 @@ static byte pattMainSmall[] = {
 };
 
 // This pattern works for MS and Borland, medium model
-static byte pattMainMedium[] = {
+static uint8_t pattMainMedium[] = {
     0xFF, 0x36, WILD, WILD,       // Push environment pointer
     0xFF, 0x36, WILD, WILD,       // Push argv
     0xFF, 0x36, WILD, WILD,       // Push argc
@@ -487,7 +487,7 @@ static byte pattMainMedium[] = {
 };
 
 // This pattern works for MS and Borland, compact model
-static byte pattMainCompact[] = {
+static uint8_t pattMainCompact[] = {
     0xFF, 0x36, WILD, WILD, // Push environment pointer lo
     0xFF, 0x36, WILD, WILD, // Push environment pointer hi
     0xFF, 0x36, WILD, WILD, // Push argv lo
@@ -499,7 +499,7 @@ static byte pattMainCompact[] = {
 };
 
 // This pattern works for MS and Borland, large model
-static byte pattMainLarge[] = {
+static uint8_t pattMainLarge[] = {
     0xFF, 0x36, WILD, WILD,       // Push environment pointer lo
     0xFF, 0x36, WILD, WILD,       // Push environment pointer hi
     0xFF, 0x36, WILD, WILD,       // Push argv lo
