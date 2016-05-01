@@ -320,18 +320,20 @@ void assign(void)
 
 int hash(uint8_t *string)
 {
-    uint16_t u, v;
-    int j;
+    if (!EntryLen || !NumEntry)
+        return -1;
 
-    u = 0;
-    for (j = 0; j < EntryLen; j++) {
+    uint16_t u = 0;
+
+    for (int j = 0; j < EntryLen; j++) {
         T1 = T1base + j * SetSize;
         u += T1[string[j] - SetMin];
     }
     u %= NumVert;
 
-    v = 0;
-    for (j = 0; j < EntryLen; j++) {
+    uint16_t v = 0;
+
+    for (int j = 0; j < EntryLen; j++) {
         T2 = T2base + j * SetSize;
         v += T2[string[j] - SetMin];
     }

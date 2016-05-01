@@ -306,7 +306,7 @@ void *allocMem(int cb)
 {
     uint8_t *p;
 
-    if (!(p = malloc((size_t)cb))) {
+    if ((p = malloc((size_t)cb)) == NULL) {
         fatalError(MALLOC_FAILED, cb);
     }
 
@@ -316,7 +316,7 @@ void *allocMem(int cb)
 // allocVar - reallocs extra variable space
 void *allocVar(void *p, int newsize)
 {
-    if (!(p = realloc((uint8_t *)p, (size_t)newsize))) {
+    if ((p = realloc(p, (size_t)newsize)) == NULL) {
         fatalError(MALLOC_FAILED, newsize);
     }
 

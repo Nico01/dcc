@@ -286,7 +286,7 @@ void dataFlow(PPROC pProc, uint32_t liveOut);              // dataflow.c
 void writeIntComment(PICODE icode, char *s);               // comwrite.c
 void writeProcComments(PPROC pProc, strTable *sTab);       // comwrite.c
 void checkStartup(PSTATE pState);                          // chklib.c
-void SetupLibCheck(void);                                  // chklib.c
+bool SetupLibCheck(void);                                  // chklib.c
 void CleanupLibCheck(void);                                // chklib.c
 bool LibCheck(PPROC p);                                    // chklib.c
 

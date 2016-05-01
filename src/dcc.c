@@ -56,8 +56,10 @@ static struct option opt[] = {
 
 static void make_asmname(const char *str)
 {
-    char *buff1 = malloc(strlen(str) + 4);
-    char *buff2 = malloc(strlen(str) + 4);
+    size_t size = strlen(str) + 4;
+
+    char *buff1 = calloc(size, sizeof(char));
+    char *buff2 = calloc(size, sizeof(char));
 
     strncpy(buff1, str, strlen(str));
     strncpy(buff2, str, strlen(str));

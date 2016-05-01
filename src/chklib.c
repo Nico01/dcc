@@ -86,7 +86,7 @@ void grab(uint8_t n, FILE *f);
 uint16_t readFileShort(FILE *f);
 void cleanup(void);
 void checkStartup(STATE *state);
-void readProtoFile(void);
+bool readProtoFile(void);
 void fixNewline(char *s);
 int searchPList(char *name);
 void checkHeap(char *msg); // For debugging
@@ -103,17 +103,18 @@ void dcc_error(const char *str, ...)
 }
 
 // This procedure is called to initialise the library check code
-void SetupLibCheck(void)
+bool SetupLibCheck(void)
 {
     uint16_t w, len;
     FILE *f;
 
     if ((f = fopen(sSigName, "rb")) == NULL) {
         printf("Warning: cannot open signature file %s\n", sSigName);
-        return; //TODO
+        return false;
     }
 
-    readProtoFile();
+    if (!readProtoFile())
+        return false;
 
     // Read the parameters
     grab(4, f);
@@ -205,6 +206,7 @@ void SetupLibCheck(void)
     }
 
     fclose(f);
+    return true;
 }
 
 // Deallocate all the stuff allocated in SetupLibCheck()
@@ -234,7 +236,13 @@ bool LibCheck(PPROC pProc)
 
     memmove(pat, &prog.Image[fileOffset], PATLEN);
     fixWildCards(pat); // Fix wild cards in the copy
+
+
     int h = hash(pat); // Hash the found proc
+
+    if (h == -1)
+        return false;
+
 
     // We always have to compare keys, because the hash function will always return a valid index
     if (memcmp(ht[h].htPat, pat, PATLEN) == 0) {
@@ -703,7 +711,7 @@ gotVendor:
  files, and need to be analysed by dcc, rather than considered as known functions.
  When a prototype is found (in searchPList()), the parameter info is written to the proc struct.
 */
-void readProtoFile(void)
+bool readProtoFile(void)
 {
     FILE *fProto;
     char *pPath;         // Point to the environment string
@@ -724,7 +732,7 @@ void readProtoFile(void)
 
     if ((fProto = fopen(szProFName, "rb")) == NULL) {
         printf("Warning: cannot open library prototype data file %s\n", szProFName);
-        return; //TODO
+        return false;
     }
 
     grab(4, fProto);
@@ -764,6 +772,7 @@ void readProtoFile(void)
         pArg[i] = (hlType)readFileShort(fProto);
 
     fclose(fProto);
+    return true;
 }
 
 // Search through the symbol names for the name. Use binary search.

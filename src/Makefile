@@ -1,6 +1,6 @@
 CC = clang
 CFLAGS += -Wall -g
-LDFLAGS += -lncurses
+LDFLAGS += -lncurses -lcapstone
 
 SOURCES  := $(wildcard *.c)
 OBJECTS  := $(SOURCES:.c=.o)

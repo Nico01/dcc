@@ -90,13 +90,14 @@ void parse(PCALL_GRAPH *pcallGraph)
 
     /* This proc needs to be called to set things up for LibCheck(),
        which checks a proc to see if it is a know C (etc) library */
-    SetupLibCheck();
+    bool err = SetupLibCheck();
 
     // Recursively build entire procedure list
     FollowCtrl(pProcList, *pcallGraph, &state);
 
     // This proc needs to be called to clean things up from SetupLibCheck()
-    CleanupLibCheck();
+    if (err)
+        CleanupLibCheck();
 }
 
 /*
