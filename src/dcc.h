@@ -214,7 +214,7 @@ typedef struct {
     uint16_t initIP;      // These are initial load values
     uint16_t initSS;      // Probably not of great interest
     uint16_t initSP;
-    bool fCOM;            // Flag set if COM program (else EXE)
+//    bool fCOM;            // Flag set if COM program (else EXE)
     uint16_t cReloc;      // No. of relocation table entries
     uint32_t *relocTable; // Ptr. to relocation table
     uint8_t *map;         // Memory bitmap ptr

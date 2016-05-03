@@ -134,8 +134,8 @@ void FrontEnd(char *filename, PCALL_GRAPH *pcallGraph)
 // displayLoadInfo - Displays low level loader type info.
 static void displayLoadInfo(void)
 {
-    printf("File type is %s\n", (prog.fCOM) ? "COM" : "EXE");
-    if (!prog.fCOM) {
+//    printf("File type is %s\n", (prog.fCOM) ? "COM" : "EXE");
+//    if (!prog.fCOM) {
         printf("Signature            = %02X%02X\n", header.sigLo, header.sigHi);
         printf("File size %% 512     = %04X\n", LH(&header.lastPageSize));
         printf("File size / 512      = %04X pages\n", LH(&header.numPages));
@@ -143,7 +143,7 @@ static void displayLoadInfo(void)
         printf("Offset to load image = %04X paras\n", LH(&header.numParaHeader));
         printf("Minimum allocation   = %04X paras\n", LH(&header.minAlloc));
         printf("Maximum allocation   = %04X paras\n", LH(&header.maxAlloc));
-    }
+//    }
     printf("Load image size      = %04lX\n", prog.cbImage - sizeof(PSP));
     printf("Initial SS:SP        = %04X:%04X\n", prog.initSS, prog.initSP);
     printf("Initial CS:IP        = %04X:%04X\n", prog.initCS, prog.initIP);
@@ -212,7 +212,8 @@ static void LoadImage(char *filename)
     if (fread(&header, 1, 2, fp) != 2)
         fatalError(CANNOT_READ, filename);
 
-    if (!(prog.fCOM = (bool)(header.sigLo != 0x4D || header.sigHi != 0x5A))) {
+//    if (!(prog.fCOM = (bool)(header.sigLo != 0x4D || header.sigHi != 0x5A))) {
+    if (header.sigLo == 0x4D && header.sigHi == 0x5A) {
         // Read rest of header
         fseek(fp, 0, SEEK_SET);
 
@@ -255,21 +256,26 @@ static void LoadImage(char *filename)
 
         // Seek to start of image
         fseek(fp, (int)LH(&header.numParaHeader) * 16, SEEK_SET);
-    } else { // COM file; in this case the load module size is just the file length
-        fseek(fp, 0, SEEK_END);
-        cb = ftell(fp);
+    } else {
+        fprintf(stderr, "%s: File format not recognized\n", filename);
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+//    else { // COM file; in this case the load module size is just the file length
+//        fseek(fp, 0, SEEK_END);
+//        cb = ftell(fp);
 
         /* COM programs start off with an ORG 100H (to leave room for a PSP)
            This is also the implied start address so if we load the image
            at offset 100H addresses should all line up properly again. */
-        prog.initCS = 0;
-        prog.initIP = 0x100;
-        prog.initSS = 0;
-        prog.initSP = 0xFFFE;
-        prog.cReloc = 0;
+//        prog.initCS = 0;
+//        prog.initIP = 0x100;
+//        prog.initSS = 0;
+//        prog.initSP = 0xFFFE;
+//        prog.cReloc = 0;
 
-        fseek(fp, 0, SEEK_SET);
-    }
+//        fseek(fp, 0, SEEK_SET);
+//    }
 
     // Allocate a block of memory for the program.
     prog.cbImage = cb + sizeof(PSP);

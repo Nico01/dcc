@@ -316,8 +316,8 @@ static void FollowCtrl(PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
                 if (pstate->f[rDX]) // offset goes into DX
                     if (funcNum == 0x09) {
                         operand = (pstate->r[rDS] << 4) + pstate->r[rDX];
-                        size = prog.fCOM ? strSize(&prog.Image[operand], '$')
-                                         : strSize(&prog.Image[operand + 0x100], '$');
+                        //size = prog.fCOM ? strSize(&prog.Image[operand], '$') : strSize(&prog.Image[operand + 0x100], '$');
+                        size = strSize(&prog.Image[operand + 0x100], '$');
                         updateSymType(operand, TYPE_STR, size);
                     }
             } else if ((Icode.ic.ll.immed.op == 0x2F) && (pstate->f[rAH]))

@@ -80,7 +80,8 @@ static void writeHeader(FILE *fp, char *fileName)
     newBundle(&cCode);
     appendStrTab(&cCode.decl, "/*\n");
     appendStrTab(&cCode.decl, " * Input file\t: %s\n", fileName);
-    appendStrTab(&cCode.decl, " * File type\t: %s\n", (prog.fCOM) ? "COM" : "EXE");
+//    appendStrTab(&cCode.decl, " * File type\t: %s\n", (prog.fCOM) ? "COM" : "EXE");
+    appendStrTab(&cCode.decl, " * File type\t: EXE\n");
     appendStrTab(&cCode.decl, " */\n\n#include \"dcc.h\"\n\n");
 
     writeBundle(fp, cCode);

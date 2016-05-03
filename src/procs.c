@@ -310,9 +310,9 @@ void adjustActArgType(COND_EXPR *exp, hlType forType, PPROC pproc)
             case TYPE_CONST:
                 // It's an offset into image where a string is found. Point to the string.
                 offL = exp->expr.ident.idNode.kte.kte;
-                if (prog.fCOM)
-                    offset = (pproc->state.r[rDS] << 4) + offL + 0x100;
-                else
+//                if (prog.fCOM)
+//                    offset = (pproc->state.r[rDS] << 4) + offL + 0x100;
+//                else
                     offset = (pproc->state.r[rDS] << 4) + offL;
                 exp->expr.ident.idNode.strIdx = offset;
                 exp->expr.ident.idType = STRING;
