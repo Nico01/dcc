@@ -214,15 +214,15 @@ typedef struct {
     uint16_t initIP;      // These are initial load values
     uint16_t initSS;      // Probably not of great interest
     uint16_t initSP;
-//    bool fCOM;            // Flag set if COM program (else EXE)
+//    bool fCOM;          // Flag set if COM program (else EXE)
     uint16_t cReloc;      // No. of relocation table entries
     uint32_t *relocTable; // Ptr. to relocation table
-    uint8_t *map;         // Memory bitmap ptr
     uint32_t cProcs;      // Number of procedures so far
     uint32_t offMain;     // The offset  of the main() proc
     uint16_t segMain;     // The segment of the main() proc
-    size_t cbImage;       // Length of image in bytes
-    uint8_t *Image;       // Allocated by loader to hold entire program image
+    size_t   cbImage;     // Length of image in bytes
+    uint8_t  *map;        // Memory bitmap ptr
+    uint8_t  *Image;      // Allocated by loader to hold entire program image
 } PROG;
 
 extern PROG prog; // Loaded program image parameters

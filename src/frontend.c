@@ -50,9 +50,8 @@ typedef struct {
 } PSP;
 
 // EXE file header
-static struct {
-    uint8_t  sigLo;          // .EXE signature: 0x4D 0x5A
-    uint8_t  sigHi;
+typedef struct {
+    uint16_t signature;      // .EXE signature: 0x4D 0x5A
     uint16_t lastPageSize;   // Size of the last page
     uint16_t numPages;       // Number of pages in the file
     uint16_t numReloc;       // Number of relocation items
@@ -66,12 +65,19 @@ static struct {
     uint16_t initCS;         // Segment displacement of code
     uint16_t relocTabOffset; // Relocation table offset
     uint16_t overlayNum;     // Overlay number
-} header;
+} __attribute__((packed, aligned(1))) MZ_Header;
+
+// Relocation table
+typedef struct {
+    uint16_t off; // Offset
+    uint16_t seg; // Segment
+} __attribute__((packed, aligned(1))) MZ_Reloc;
 
 #define EXE_RELOCATION 0x10 // EXE images rellocated to above PSP
 
-static void LoadImage(char *filename);
-static void displayLoadInfo(void);
+static MZ_Header *read_mz_header(FILE *fp);
+static void LoadImage(FILE *fp, MZ_Header *hdr);
+static void displayLoadInfo(MZ_Header *hdr);
 static void displayMemMap(void);
 
 /*
@@ -84,11 +90,24 @@ void FrontEnd(char *filename, PCALL_GRAPH *pcallGraph)
     PSYM psym;
     int i, c;
 
+    FILE *fp = fopen(filename, "rb");
+
+    if (fp == NULL)
+        fatalError(CANNOT_OPEN, filename); 
+
+    MZ_Header *hdr = read_mz_header(fp);
+
+    if (hdr == NULL) { // .com not handled for now
+        fprintf(stderr, "%s: File format not recognized\n", filename);
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+
     // Load program into memory
-    LoadImage(filename);
+    LoadImage(fp, hdr);
 
     if (option.verbose) {
-        displayLoadInfo();
+        displayLoadInfo(hdr);
     }
 
     /* Do depth first flow analysis building call graph and procedure list,
@@ -132,27 +151,27 @@ void FrontEnd(char *filename, PCALL_GRAPH *pcallGraph)
 }
 
 // displayLoadInfo - Displays low level loader type info.
-static void displayLoadInfo(void)
+static void displayLoadInfo(MZ_Header *hdr)
 {
 //    printf("File type is %s\n", (prog.fCOM) ? "COM" : "EXE");
 //    if (!prog.fCOM) {
-        printf("Signature            = %02X%02X\n", header.sigLo, header.sigHi);
-        printf("File size %% 512     = %04X\n", LH(&header.lastPageSize));
-        printf("File size / 512      = %04X pages\n", LH(&header.numPages));
-        printf("# relocation items   = %04X\n", LH(&header.numReloc));
-        printf("Offset to load image = %04X paras\n", LH(&header.numParaHeader));
-        printf("Minimum allocation   = %04X paras\n", LH(&header.minAlloc));
-        printf("Maximum allocation   = %04X paras\n", LH(&header.maxAlloc));
+    printf("Signature            = %04X\n",       hdr->signature);
+    printf("File size %% 512     = %04X\n",       hdr->lastPageSize);
+    printf("File size / 512      = %04X pages\n", hdr->numPages);
+    printf("# relocation items   = %04X\n",       hdr->numReloc);
+    printf("Offset to load image = %04X paras\n", hdr->numParaHeader);
+    printf("Minimum allocation   = %04X paras\n", hdr->minAlloc);
+    printf("Maximum allocation   = %04X paras\n", hdr->maxAlloc);
 //    }
-    printf("Load image size      = %04lX\n", prog.cbImage - sizeof(PSP));
-    printf("Initial SS:SP        = %04X:%04X\n", prog.initSS, prog.initSP);
-    printf("Initial CS:IP        = %04X:%04X\n", prog.initCS, prog.initIP);
+    size_t size = prog.cbImage - sizeof(PSP);
+    printf("Load image size      = %04lX (%lu bytes)\n", size, size);
+    printf("Initial SS:SP        = %04X:%04X\n",  prog.initSS, prog.initSP);
+    printf("Initial CS:IP        = %04X:%04X\n",  prog.initCS, prog.initIP);
 
     if (option.VeryVerbose && prog.cReloc) {
         printf("\nRelocation Table\n");
-        for (int i = 0; i < prog.cReloc; i++) {
+        for (int i = 0; i < prog.cReloc; i++)
             printf("%06X -> [%04X]\n", prog.relocTable[i], LH(prog.Image + prog.relocTable[i]));
-        }
     }
     printf("\n");
 }
@@ -197,85 +216,64 @@ static void displayMemMap(void)
     printf("\n");
 }
 
-// LoadImage
-static void LoadImage(char *filename)
+static MZ_Header *read_mz_header(FILE *fp)
 {
-    FILE *fp;
-    int i, cb;
-    uint8_t buf[4];
+    MZ_Header *hdr = malloc(sizeof(MZ_Header));
 
-    // Open the input file
-    if ((fp = fopen(filename, "rb")) == NULL)
-        fatalError(CANNOT_OPEN, filename);
+    fseek(fp, 0, SEEK_SET);
+    fread(hdr, sizeof(MZ_Header), 1, fp);
 
-    // Read in first 2 bytes to check EXE signature
-    if (fread(&header, 1, 2, fp) != 2)
-        fatalError(CANNOT_READ, filename);
+    if (hdr->signature != 0x5a4D && hdr->signature != 0x4D5a) {
+        free(hdr);
+        return NULL;
+    }
 
-//    if (!(prog.fCOM = (bool)(header.sigLo != 0x4D || header.sigHi != 0x5A))) {
-    if (header.sigLo == 0x4D && header.sigHi == 0x5A) {
-        // Read rest of header
-        fseek(fp, 0, SEEK_SET);
+    if (hdr->relocTabOffset == 0x40) { // This is a typical DOS kludge!
+        free(hdr);
+        fatalError(NEWEXE_FORMAT);
+    }
 
-        if (fread(&header, sizeof(header), 1, fp) != 1)
-            fatalError(CANNOT_READ, filename);
+    return hdr;
+}
 
-        // This is a typical DOS kludge!
-        if (LH(&header.relocTabOffset) == 0x40)
-            fatalError(NEWEXE_FORMAT);
+// LoadImage
+static void LoadImage(FILE *fp, MZ_Header *hdr)
+{
+    /* Calculate the load module size. This is the number of pages in the file less the length
+       of the header and reloc table less the number of bytes unused on last page */        
+    size_t cb = hdr->numPages * 512 - (hdr->numParaHeader * 16);
 
-        /* Calculate the load module size. This is the number of pages in the file less the length
-           of the header and reloc table less the number of bytes unused on last page */
-        cb = LH(&header.numPages) * 512 - LH(&header.numParaHeader) * 16;
+    if (hdr->lastPageSize)
+        cb -= (512 - hdr->lastPageSize);
 
-        if (header.lastPageSize)
-            cb -= 512 - LH(&header.lastPageSize);
+    /* We quietly ignore minAlloc and maxAlloc since for our purposes it doesn't really matter
+       where in real memory the program would end up. EXE programs can't really rely on their
+       load location so setting the PSP segment to 0 is fine.
+       Certainly programs that prod around in DOS or BIOS are going to have to load DS from
+       a constant so it'll be pretty obvious. */
+    prog.initCS = hdr->initCS + EXE_RELOCATION;
+    prog.initIP = hdr->initIP;
+    prog.initSS = hdr->initSS + EXE_RELOCATION;
+    prog.initSP = hdr->initSP;
+    prog.cReloc = hdr->numReloc;
 
-        /* We quietly ignore minAlloc and maxAlloc since for our purposes it doesn't really matter
-           where in real memory the program would end up. EXE programs can't really rely on their
-           load location so setting the PSP segment to 0 is fine.
-           Certainly programs that prod around in DOS or BIOS are going to have to load DS from
-           a constant so it'll be pretty obvious. */
-        prog.initCS = (int16_t)LH(&header.initCS) + EXE_RELOCATION;
-        prog.initIP = (int16_t)LH(&header.initIP);
-        prog.initSS = (int16_t)LH(&header.initSS) + EXE_RELOCATION;
-        prog.initSP = (int16_t)LH(&header.initSP);
-        prog.cReloc = (int16_t)LH(&header.numReloc);
+    // Allocate the relocation table
+    if (prog.cReloc) {
+        MZ_Reloc *reloc_table = malloc(prog.cReloc * sizeof(MZ_Reloc *)); 
+        prog.relocTable = allocMem(prog.cReloc * sizeof(uint32_t));
+        fseek(fp, hdr->relocTabOffset, SEEK_SET);
 
-        // Allocate the relocation table
-        if (prog.cReloc) {
-            prog.relocTable = allocMem(prog.cReloc * sizeof(int));
-            fseek(fp, LH(&header.relocTabOffset), SEEK_SET);
-
-            // Read in seg:offset pairs and convert to Image ptrs
-            for (i = 0; i < prog.cReloc; i++) {
-                fread(buf, 1, 4, fp);
-                prog.relocTable[i] = LH(buf) + (((int)LH(buf + 2) + EXE_RELOCATION) << 4);
-            }
+        // Read in seg:offset pairs and convert to Image ptrs
+        for (int i = 0; i < prog.cReloc; i++) {
+            fread(&reloc_table[i], sizeof(MZ_Reloc), 1, fp);
+            prog.relocTable[i] = reloc_table[i].off + ((reloc_table[i].seg + EXE_RELOCATION) << 4);
         }
 
-        // Seek to start of image
-        fseek(fp, (int)LH(&header.numParaHeader) * 16, SEEK_SET);
-    } else {
-        fprintf(stderr, "%s: File format not recognized\n", filename);
-        fclose(fp);
-        exit(EXIT_FAILURE);
+        free(reloc_table);
     }
-//    else { // COM file; in this case the load module size is just the file length
-//        fseek(fp, 0, SEEK_END);
-//        cb = ftell(fp);
 
-        /* COM programs start off with an ORG 100H (to leave room for a PSP)
-           This is also the implied start address so if we load the image
-           at offset 100H addresses should all line up properly again. */
-//        prog.initCS = 0;
-//        prog.initIP = 0x100;
-//        prog.initSS = 0;
-//        prog.initSP = 0xFFFE;
-//        prog.cReloc = 0;
-
-//        fseek(fp, 0, SEEK_SET);
-//    }
+    // Seek to start of image
+    fseek(fp, hdr->numParaHeader * 16, SEEK_SET);
 
     // Allocate a block of memory for the program.
     prog.cbImage = cb + sizeof(PSP);
@@ -284,17 +282,15 @@ static void LoadImage(char *filename)
     prog.Image[1] = 0x20; 
 
     // Read in the image past where a PSP would go
-    if (cb != (int)fread(prog.Image + sizeof(PSP), 1, (size_t)cb, fp)) {
-        fatalError(CANNOT_READ, filename);
-    }
+    fread(prog.Image + sizeof(PSP), 1, cb, fp);
 
     // Set up memory map
     cb = (prog.cbImage + 3) / 4;
-    prog.map = (uint8_t *)memset(allocMem(cb), BM_UNKNOWN, (size_t)cb);
+    prog.map = memset(allocMem(cb), BM_UNKNOWN, cb);
 
     // Relocate segment constants
     if (prog.cReloc) {
-        for (i = 0; i < prog.cReloc; i++) {
+        for (int i = 0; i < prog.cReloc; i++) {
             uint8_t *p = &prog.Image[prog.relocTable[i]];
             uint16_t w = (uint16_t)LH(p) + EXE_RELOCATION;
             *p++ = (uint8_t)(w & 0x00FF);
