@@ -134,8 +134,6 @@ void FrontEnd(char *filename, PCALL_GRAPH *pcallGraph)
 // displayLoadInfo - Displays low level loader type info.
 static void displayLoadInfo(void)
 {
-    int i;
-
     printf("File type is %s\n", (prog.fCOM) ? "COM" : "EXE");
     if (!prog.fCOM) {
         printf("Signature            = %02X%02X\n", header.sigLo, header.sigHi);
@@ -152,7 +150,7 @@ static void displayLoadInfo(void)
 
     if (option.VeryVerbose && prog.cReloc) {
         printf("\nRelocation Table\n");
-        for (i = 0; i < prog.cReloc; i++) {
+        for (int i = 0; i < prog.cReloc; i++) {
             printf("%06X -> [%04X]\n", prog.relocTable[i], LH(prog.Image + prog.relocTable[i]));
         }
     }

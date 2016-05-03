@@ -415,10 +415,8 @@ uint8_t otherLongRegi(uint8_t regi, int idx, LOCAL_ID *locTbl)
 */
 void propLongId(LOCAL_ID *locid, uint8_t regL, uint8_t regH, char *name)
 {
-    ID *id;
-
     for (int i = 0; i < locid->csym; i++) {
-        id = &locid->id[i];
+        ID *id = &locid->id[i];
         if ((id->type == TYPE_WORD_SIGN) || (id->type == TYPE_WORD_UNSIGN)) {
             if (id->id.regi == regL) {
                 strcpy(id->name, name);

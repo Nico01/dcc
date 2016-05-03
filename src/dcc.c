@@ -56,6 +56,11 @@ static struct option opt[] = {
 
 static void make_asmname(const char *str)
 {
+    if (str == NULL) {
+        fprintf(stderr, "Error: '%s' invalid argument (%s, ln %d)\n", __func__, __FILE__, __LINE__);
+        exit(EXIT_FAILURE);
+    }
+
     size_t size = strlen(str) + 4;
 
     char *buff1 = calloc(size, sizeof(char));
@@ -166,6 +171,11 @@ int main(int argc, char *argv[])
     writeCallGraph(callGraph);
 
     // freeDataStructures(pProcList);
+
+    if (asm1_name)
+        free(asm1_name);
+    if (asm2_name)
+        free(asm2_name);
 
     return 0;
 }
