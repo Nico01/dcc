@@ -23,45 +23,45 @@
 // I-code related definitions
 
 // LOW_LEVEL icode flags
-#define B 0x000001          // Byte operands (value implicitly used)
-#define I 0x000002          // Immed. source
-#define NOT_HLL 0x000004    // Not HLL inst.
-#define FLOAT_OP 0x000008   // ESC or WAIT
+#define B          0x000001  // Byte operands (value implicitly used)
+#define I          0x000002  // Immed. source
+#define NOT_HLL    0x000004  // Not HLL inst.
+#define FLOAT_OP   0x000008  // ESC or WAIT
 
-#define SEG_IMMED 0x000010  // Number is relocated segment value
-#define IMPURE 0x000020     // Instruction modifies code
-#define WORD_OFF 0x000040   // Inst has word offset ie.could be address
-#define TERMINATES 0x000080 // Instruction terminates program
+#define SEG_IMMED  0x000010  // Number is relocated segment value
+#define IMPURE     0x000020  // Instruction modifies code
+#define WORD_OFF   0x000040  // Inst has word offset ie.could be address
+#define TERMINATES 0x000080  // Instruction terminates program
 
-#define CASE 0x000100       // Label as case part of switch
-#define SWITCH 0x000200     // Treat indirect JMP as switch stmt
-#define TARGET 0x000400     // Jump target
-#define SYNTHETIC 0x000800  // Synthetic jump instruction
-#define NO_LABEL 0x001000   // Immed. jump cannot be linked to a label
-#define NO_CODE 0x002000    // Hole in Icode array
-#define SYM_USE 0x004000    // Instruction uses a symbol
-#define SYM_DEF 0x008000    // Instruction defines a symbol
+#define CASE       0x000100  // Label as case part of switch
+#define SWITCH     0x000200  // Treat indirect JMP as switch stmt
+#define TARGET     0x000400  // Jump target
+#define SYNTHETIC  0x000800  // Synthetic jump instruction
+#define NO_LABEL   0x001000  // Immed. jump cannot be linked to a label
+#define NO_CODE    0x002000  // Hole in Icode array
+#define SYM_USE    0x004000  // Instruction uses a symbol
+#define SYM_DEF    0x008000  // Instruction defines a symbol
 
-#define NO_SRC 0x010000     // Opcode takes no source
-#define NO_OPS 0x020000     // Opcode takes no operands
-#define IM_OPS 0x040000     // Opcode takes implicit operands
-#define SRC_B 0x080000      // Source operand is byte (dest is word)
-#define NO_SRC_B 0xF7FFFF   // Masks off SRC_B
-#define HLL_LABEL 0x100000  // Icode has a high level language label
-#define IM_DST 0x200000     // Implicit DST for opcode (SIGNEX)
-#define IM_SRC 0x400000     // Implicit SRC for opcode (dx:ax)
-#define IM_TMP_DST 0x800000 // Implicit rTMP DST for opcode (DIV/IDIV)
+#define NO_SRC     0x010000  // Opcode takes no source
+#define NO_OPS     0x020000  // Opcode takes no operands
+#define IM_OPS     0x040000  // Opcode takes implicit operands
+#define SRC_B      0x080000  // Source operand is byte (dest is word)
+#define NO_SRC_B   0xF7FFFF  // Masks off SRC_B
+#define HLL_LABEL  0x100000  // Icode has a high level language label
+#define IM_DST     0x200000  // Implicit DST for opcode (SIGNEX)
+#define IM_SRC     0x400000  // Implicit SRC for opcode (dx:ax)
+#define IM_TMP_DST 0x800000  // Implicit rTMP DST for opcode (DIV/IDIV)
 
-#define JMP_ICODE 0x1000000 // Jmp dest immed.op converted to icode index
-#define JX_LOOP 0x2000000   // Cond jump is part of loop conditional exp
-#define REST_STK 0x4000000  // Stack needs to be restored after CALL
+#define JMP_ICODE  0x1000000 // Jmp dest immed.op converted to icode index
+#define JX_LOOP    0x2000000 // Cond jump is part of loop conditional exp
+#define REST_STK   0x4000000 // Stack needs to be restored after CALL
 
 // Parser flags
-#define TO_REG 0x000100     // rm is source
-#define S 0x000200          // sign extend
-#define OP386 0x000400      // 386 op-code
-#define NSP 0x000800        // NOT_HLL if SP is src or dst
-#define ICODEMASK 0xFF00FF  // Masks off parser flags
+#define TO_REG    0x000100 // rm is source
+#define S         0x000200 // sign extend
+#define OP386     0x000400 // 386 op-code
+#define NSP       0x000800 // NOT_HLL if SP is src or dst
+#define ICODEMASK 0xFF00FF // Masks off parser flags
 
 // LOW_LEVEL icode, DU flag bits
 #define Cf 1
@@ -287,57 +287,56 @@ typedef enum {
 
 // Icode definition: LOW_LEVEL and HIGH_LEVEL
 typedef struct {
-    icodeType type;                         // Icode type
-    bool invalid;                           // Has no HIGH_LEVEL equivalent
-    struct _BB *inBB;                       // BB to which this icode belongs
-    DU_ICODE du;                            // Def/use regs/vars
-    DU1 du1;                                // du chain 1
-    int codeIdx;                            // Index into cCode.code
-    struct {                                // Different types of icodes
-        struct {                            // For LOW_LEVEL icodes
-            llIcode opcode;                 // llIcode instruction
-            uint8_t numBytes;               // Number of bytes this instr
-            uint32_t flg;                   // icode flags
-            uint32_t label;                 // offset in image (20-bit adr)
-            ICODEMEM dst;                   // destination operand
-            ICODEMEM src;                   // source operand
-            union {                         // Source operand if (flg & I)
-                uint32_t op;                // idx of immed src op
-                struct {                    // Call & # actual arg bytes
-                    struct _proc *proc;     // ^ target proc (for CALL(F))
-                    int cb;                 // # actual arg bytes
-                } proc;
-            } immed;
-            DU flagDU;                      // def/use of flags
-            struct {                        // Case table if op==JMP && !I
-                int numEntries;             // # entries in case table
-                uint32_t *entries;          // array of offsets
-            } caseTbl;
-            int hllLabNum;                  // label # for hll codegen
-        } ll;
+    icodeType type;                     // Icode type
+    bool invalid;                       // Has no HIGH_LEVEL equivalent
+    struct _BB *inBB;                   // BB to which this icode belongs
+    DU_ICODE du;                        // Def/use regs/vars
+    DU1 du1;                            // du chain 1
+    int codeIdx;                        // Index into cCode.code
 
-        struct _hl {                        // For HIGH_LEVEL icodes
-            hlIcode opcode;                 // hlIcode opcode
-            union {                         // different operands
-                struct {                    // for ASSIGN
-                    COND_EXPR *lhs;
-                    COND_EXPR *rhs;
-                } asgn;
-                COND_EXPR *exp;             // for JCOND, RET, PUSH, POP
-                struct {                    // for CALL
-                    struct _proc *proc;
-                    struct _STKFRAME *args; // actual arguments
-                } call;
-            } oper;                         // operand
-        } hl;
-    } ic;                                   // intermediate code
+    struct {                            // For LOW_LEVEL icodes
+        llIcode opcode;                 // llIcode instruction
+        uint8_t numBytes;               // Number of bytes this instr
+        uint32_t flg;                   // icode flags
+        uint32_t label;                 // offset in image (20-bit adr)
+        ICODEMEM dst;                   // destination operand
+        ICODEMEM src;                   // source operand
+        union {                         // Source operand if (flg & I)
+            uint32_t op;                // idx of immed src op
+            struct {                    // Call & # actual arg bytes
+                struct _proc *proc;     // ^ target proc (for CALL(F))
+                int cb;                 // # actual arg bytes
+            } proc;
+        } immed;
+        DU flagDU;                      // def/use of flags
+        struct {                        // Case table if op==JMP && !I
+            int numEntries;             // # entries in case table
+            uint32_t *entries;          // array of offsets
+        } caseTbl;
+        int hllLabNum;                  // label # for hll codegen
+    } ll;
+
+    struct _hl {                        // For HIGH_LEVEL icodes
+        hlIcode opcode;                 // hlIcode opcode
+        union {                         // different operands
+            struct {                    // for ASSIGN
+                COND_EXPR *lhs;
+                COND_EXPR *rhs;
+            } asgn;
+            COND_EXPR *exp;             // for JCOND, RET, PUSH, POP
+            struct {                    // for CALL
+                struct _proc *proc;
+                struct _STKFRAME *args; // actual arguments
+            } call;
+        } oper;                         // operand
+    } hl;
 } ICODE;
 typedef ICODE *PICODE;
 
 typedef struct {  // Icode array info
     int numIcode; // # icodes in use
     int alloc;    // # icodes allocated
-    PICODE icode; // Array of icodes
+    ICODE *icode; // Array of icodes
 } ICODE_REC;
 
 #endif // ICODE_H

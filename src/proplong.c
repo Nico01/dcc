@@ -54,7 +54,7 @@ static bool isLong23(int i, PBB pbb, PICODE icode, int *off, int *arc)
         obb2 = t->edges[THEN].BBptr;
 
         if ((obb2->length == 2) && (obb2->nodeType == TWO_BRANCH) &&
-            (icode[obb2->start].ic.ll.opcode == iCMP)) {
+            (icode[obb2->start].ll.opcode == iCMP)) {
             *off = obb2->start - i;
             *arc = THEN;
             return true;
@@ -65,7 +65,7 @@ static bool isLong23(int i, PBB pbb, PICODE icode, int *off, int *arc)
     else if ((e->length == 1) && (e->nodeType == TWO_BRANCH) && (e->numInEdges == 1)) {
         obb2 = e->edges[THEN].BBptr;
         if ((obb2->length == 2) && (obb2->nodeType == TWO_BRANCH) &&
-            (icode[obb2->start].ic.ll.opcode == iCMP)) {
+            (icode[obb2->start].ll.opcode == iCMP)) {
             *off = obb2->start - i;
             *arc = ELSE;
             return true;
@@ -78,8 +78,8 @@ static bool isLong23(int i, PBB pbb, PICODE icode, int *off, int *arc)
 // Returns whether the conditions for a 2-2 long variable are satisfied
 static bool isLong22(PICODE pIcode, PICODE pEnd, int *off)
 {
-    if (((pIcode + 2) < pEnd) && ((pIcode + 2)->ic.ll.opcode == iCMP) &&
-        (isJCond((pIcode + 1)->ic.ll.opcode)) && (isJCond((pIcode + 3)->ic.ll.opcode))) {
+    if (((pIcode + 2) < pEnd) && ((pIcode + 2)->ll.opcode == iCMP) &&
+        (isJCond((pIcode + 1)->ll.opcode)) && (isJCond((pIcode + 3)->ll.opcode))) {
         *off = 2;
         return true;
     }
@@ -176,7 +176,7 @@ static void longJCond23(COND_EXPR *rhs, COND_EXPR *lhs, PICODE pIcode, int *idx,
     }
 
     // Create new JCOND and condition
-    lhs = boolCondExp(lhs, rhs, condOpJCond[(pIcode + off + 1)->ic.ll.opcode - iJB]);
+    lhs = boolCondExp(lhs, rhs, condOpJCond[(pIcode + off + 1)->ll.opcode - iJB]);
     newJCondHlIcode(pIcode + 1, lhs);
     copyDU(pIcode + 1, pIcode, USE, USE);
     (pIcode + 1)->du.use |= (pIcode + off)->du.use;
@@ -204,7 +204,7 @@ static void longJCond22(COND_EXPR *rhs, COND_EXPR *lhs, PICODE pIcode, int *idx)
     PBB pbb, obb1, tbb;
 
     // Form conditional expression
-    lhs = boolCondExp(lhs, rhs, condOpJCond[(pIcode + 3)->ic.ll.opcode - iJB]);
+    lhs = boolCondExp(lhs, rhs, condOpJCond[(pIcode + 3)->ll.opcode - iJB]);
     newJCondHlIcode(pIcode + 1, lhs);
     copyDU(pIcode + 1, pIcode, USE, USE);
     (pIcode + 1)->du.use |= (pIcode + 2)->du.use;
@@ -229,7 +229,7 @@ static void longJCond22(COND_EXPR *rhs, COND_EXPR *lhs, PICODE pIcode, int *idx)
             }
         }
 
-        if ((pIcode + 3)->ic.ll.opcode == iJE)
+        if ((pIcode + 3)->ll.opcode == iJE)
             tbb->numInEdges--; // looses 1 arc
         else                   // iJNE => replace arc
             tbb->inEdges[tbb->numInEdges - 1] = pbb;
@@ -247,7 +247,7 @@ static void longJCond22(COND_EXPR *rhs, COND_EXPR *lhs, PICODE pIcode, int *idx)
             }
         }
 
-        if ((pIcode + 3)->ic.ll.opcode == iJE) // replace
+        if ((pIcode + 3)->ll.opcode == iJE) // replace
             tbb->inEdges[tbb->numInEdges - 1] = pbb;
         else
             tbb->numInEdges--; // iJNE => looses 1 arc
@@ -284,8 +284,8 @@ static void propLongStk(int i, ID *pLocId, PPROC pProc)
         if ((pIcode->type == HIGH_LEVEL) || (pIcode->invalid == true))
             continue;
 
-        if (pIcode->ic.ll.opcode == (pIcode + 1)->ic.ll.opcode) {
-            switch (pIcode->ic.ll.opcode) {
+        if (pIcode->ll.opcode == (pIcode + 1)->ll.opcode) {
+            switch (pIcode->ll.opcode) {
             default: break;
             case iMOV:
                 if (checkLongEq(pLocId->id.longStkId, pIcode, i, idx, pProc, &rhs, &lhs, 1) == true) {
@@ -299,7 +299,7 @@ static void propLongStk(int i, ID *pLocId, PPROC pProc)
             case iOR:
             case iXOR:
                 if (checkLongEq(pLocId->id.longStkId, pIcode, i, idx, pProc, &rhs, &lhs, 1) == true) {
-                    switch (pIcode->ic.ll.opcode) {
+                    switch (pIcode->ll.opcode) {
                     default: break;
                     case iAND:
                         rhs = boolCondExp(lhs, rhs, AND);
@@ -328,7 +328,7 @@ static void propLongStk(int i, ID *pLocId, PPROC pProc)
         }
 
         // Check long conditional (i.e. 2 CMPs and 3 branches
-        else if ((pIcode->ic.ll.opcode == iCMP) &&
+        else if ((pIcode->ll.opcode == iCMP) &&
                  (isLong23(idx, pIcode->inBB, pProc->Icode.icode, &off, &arc))) {
             if (checkLongEq(pLocId->id.longStkId, pIcode, i, idx, pProc, &rhs, &lhs, off) == true)
                 longJCond23(rhs, lhs, pIcode, &idx, pProc, arc, off);
@@ -336,7 +336,7 @@ static void propLongStk(int i, ID *pLocId, PPROC pProc)
 
         /* Check for long conditional equality or inequality.
            This requires 2 CMPs and 2 branches */
-        else if ((pIcode->ic.ll.opcode == iCMP) && isLong22(pIcode, pEnd, &off)) {
+        else if ((pIcode->ll.opcode == iCMP) && isLong22(pIcode, pEnd, &off)) {
             if (checkLongEq(pLocId->id.longStkId, pIcode, i, idx, pProc, &rhs, &lhs, off) == true)
                 longJCond22(rhs, lhs, pIcode, &idx);
         }
@@ -368,12 +368,12 @@ static void propLongReg(int i, ID *pLocId, PPROC pProc)
             if ((pIcode->type == HIGH_LEVEL) || (pIcode->invalid == true))
                 continue;
 
-            if (pIcode->ic.ll.opcode == (pIcode + 1)->ic.ll.opcode)
-                switch (pIcode->ic.ll.opcode) {
+            if (pIcode->ll.opcode == (pIcode + 1)->ll.opcode)
+                switch (pIcode->ll.opcode) {
                 default: break;
                 case iMOV:
-                    pmH = &pIcode->ic.ll.dst;
-                    pmL = &(pIcode + 1)->ic.ll.dst;
+                    pmH = &pIcode->ll.dst;
+                    pmL = &(pIcode + 1)->ll.dst;
                     if ((pLocId->id.longId.h == pmH->regi) && (pLocId->id.longId.l == pmL->regi)) {
                         lhs = idCondExpLongIdx(i);
                         insertIdx(&pProc->localId.id[i].idx, idx - 1);
@@ -386,8 +386,8 @@ static void propLongReg(int i, ID *pLocId, PPROC pProc)
                     break;
 
                 case iPOP:
-                    pmH = &(pIcode + 1)->ic.ll.dst;
-                    pmL = &pIcode->ic.ll.dst;
+                    pmH = &(pIcode + 1)->ll.dst;
+                    pmL = &pIcode->ll.dst;
                     if ((pLocId->id.longId.h == pmH->regi) && (pLocId->id.longId.l == pmL->regi)) {
                         lhs = idCondExpLongIdx(i);
                         setRegDU(pIcode, pmH->regi, DEF);
@@ -402,13 +402,13 @@ static void propLongReg(int i, ID *pLocId, PPROC pProc)
                 case iAND:
                 case iOR:
                 case iXOR:
-                    pmL = &pIcode->ic.ll.dst;
-                    pmH = &(pIcode + 1)->ic.ll.dst;
+                    pmL = &pIcode->ll.dst;
+                    pmH = &(pIcode + 1)->ll.dst;
                     if ((pLocId->id.longId.h == pmH->regi) && (pLocId->id.longId.l == pmL->regi)) {
                         lhs = idCondExpLongIdx(i);
                         setRegDU(pIcode, pmH->regi, USE_DEF);
                         rhs = idCondExpLong(&pProc->localId, SRC, pIcode, LOW_FIRST, idx, USE, 1);
-                        switch (pIcode->ic.ll.opcode) {
+                        switch (pIcode->ll.opcode) {
                         default: break;
                         case iAND:
                             rhs = boolCondExp(lhs, rhs, AND);
@@ -435,14 +435,14 @@ static void propLongReg(int i, ID *pLocId, PPROC pProc)
                 if ((pIcode->type == HIGH_LEVEL) || (pIcode->invalid == true))
                     continue;
 
-                if (pIcode->ic.ll.opcode == (pIcode + 1)->ic.ll.opcode)
-                    switch (pIcode->ic.ll.opcode) {
+                if (pIcode->ll.opcode == (pIcode + 1)->ll.opcode)
+                    switch (pIcode->ll.opcode) {
                     default: break;
                     case iMOV:
-                        if ((pLocId->id.longId.h == pIcode->ic.ll.src.regi) &&
-                            (pLocId->id.longId.l == (pIcode + 1)->ic.ll.src.regi)) {
+                        if ((pLocId->id.longId.h == pIcode->ll.src.regi) &&
+                            (pLocId->id.longId.l == (pIcode + 1)->ll.src.regi)) {
                             rhs = idCondExpLongIdx(i);
-                            setRegDU(pIcode, (pIcode + 1)->ic.ll.src.regi, USE);
+                            setRegDU(pIcode, (pIcode + 1)->ll.src.regi, USE);
                             lhs = idCondExpLong(&pProc->localId, DST, pIcode, HIGH_FIRST, idx, DEF, 1);
                             newAsgnHlIcode(pIcode, lhs, rhs);
                             invalidateIcode(pIcode + 1);
@@ -451,10 +451,10 @@ static void propLongReg(int i, ID *pLocId, PPROC pProc)
                         break;
 
                     case iPUSH:
-                        if ((pLocId->id.longId.h == pIcode->ic.ll.src.regi) &&
-                            (pLocId->id.longId.l == (pIcode + 1)->ic.ll.src.regi)) {
+                        if ((pLocId->id.longId.h == pIcode->ll.src.regi) &&
+                            (pLocId->id.longId.l == (pIcode + 1)->ll.src.regi)) {
                             rhs = idCondExpLongIdx(i);
-                            setRegDU(pIcode, (pIcode + 1)->ic.ll.src.regi, USE);
+                            setRegDU(pIcode, (pIcode + 1)->ll.src.regi, USE);
                             newUnaryHlIcode(pIcode, PUSH, lhs);
                             invalidateIcode(pIcode + 1);
                         }
@@ -466,15 +466,15 @@ static void propLongReg(int i, ID *pLocId, PPROC pProc)
                     case iAND:
                     case iOR:
                     case iXOR:
-                        pmL = &pIcode->ic.ll.dst;
-                        pmH = &(pIcode + 1)->ic.ll.dst;
+                        pmL = &pIcode->ll.dst;
+                        pmH = &(pIcode + 1)->ll.dst;
                         if ((pLocId->id.longId.h == pmH->regi) &&
                             (pLocId->id.longId.l == pmL->regi)) {
                             lhs = idCondExpLongIdx(i);
                             setRegDU(pIcode, pmH->regi, USE_DEF);
                             rhs =
                                 idCondExpLong(&pProc->localId, SRC, pIcode, LOW_FIRST, idx, USE, 1);
-                            switch (pIcode->ic.ll.opcode) {
+                            switch (pIcode->ll.opcode) {
                             default: break;
                             case iAND:
                                 rhs = boolCondExp(lhs, rhs, AND);
@@ -494,7 +494,7 @@ static void propLongReg(int i, ID *pLocId, PPROC pProc)
                     } // eos
 
                 // Check long conditional (i.e. 2 CMPs and 3 branches
-                else if ((pIcode->ic.ll.opcode == iCMP) &&
+                else if ((pIcode->ll.opcode == iCMP) &&
                          (isLong23(idx, pIcode->inBB, pProc->Icode.icode, &off, &arc))) {
                     if (checkLongRegEq(pLocId->id.longId, pIcode, i, idx, pProc, &rhs, &lhs, off) == true)
                         longJCond23(rhs, lhs, pIcode, &idx, pProc, arc, off);
@@ -502,7 +502,7 @@ static void propLongReg(int i, ID *pLocId, PPROC pProc)
 
                 /* Check for long conditional equality or inequality.
                    This requires 2 CMPs and 2 branches */
-                else if ((pIcode->ic.ll.opcode == iCMP) && (isLong22(pIcode, pEnd, &off))) {
+                else if ((pIcode->ll.opcode == iCMP) && (isLong22(pIcode, pEnd, &off))) {
                     if (checkLongRegEq(pLocId->id.longId, pIcode, i, idx, pProc, &rhs, &lhs, off) == true)
                         longJCond22(rhs, lhs, pIcode, &idx);
                 }
@@ -511,13 +511,13 @@ static void propLongReg(int i, ID *pLocId, PPROC pProc)
                              JX lab
                              => JCOND (regH:regL X 0) lab
                    This is better code than JCOND (HI(regH:regL) | LO(regH:regL)) */
-                else if ((pIcode->ic.ll.opcode == iOR) && ((pIcode + 1) < pEnd) &&
-                         (isJCond((pIcode + 1)->ic.ll.opcode))) {
-                    if ((pIcode->ic.ll.dst.regi == pLocId->id.longId.h) &&
-                        (pIcode->ic.ll.src.regi == pLocId->id.longId.l)) {
+                else if ((pIcode->ll.opcode == iOR) && ((pIcode + 1) < pEnd) &&
+                         (isJCond((pIcode + 1)->ll.opcode))) {
+                    if ((pIcode->ll.dst.regi == pLocId->id.longId.h) &&
+                        (pIcode->ll.src.regi == pLocId->id.longId.l)) {
                         lhs = idCondExpLongIdx(i);
                         rhs = idCondExpKte(0, 4); // long 0
-                        lhs = boolCondExp(lhs, rhs, condOpJCond[(pIcode + 1)->ic.ll.opcode - iJB]);
+                        lhs = boolCondExp(lhs, rhs, condOpJCond[(pIcode + 1)->ll.opcode - iJB]);
                         newJCondHlIcode(pIcode + 1, lhs);
                         copyDU(pIcode + 1, pIcode, USE, USE);
                         invalidateIcode(pIcode);

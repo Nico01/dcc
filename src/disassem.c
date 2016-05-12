@@ -184,16 +184,16 @@ void disassem(int pass, PPROC ppProc)
 
     if (pass == 1) { // Bind jump offsets to labels
         for (int i = 0; i < numIcode; i++) {
-            if ((pc[i].ic.ll.flg & I) && !(pc[i].ic.ll.flg & JMP_ICODE) &&
-                JmpInst(pc[i].ic.ll.opcode)) {
+            if ((pc[i].ll.flg & I) && !(pc[i].ll.flg & JMP_ICODE) &&
+                JmpInst(pc[i].ll.opcode)) {
                 // Replace the immediate operand with an icode index
-                if (labelSrch(pc, numIcode, pc[i].ic.ll.immed.op, (int *)&pc[i].ic.ll.immed.op)) {
+                if (labelSrch(pc, numIcode, pc[i].ll.immed.op, (int *)&pc[i].ll.immed.op)) {
                     // This icode is the target of a jump
-                    pc[pc[i].ic.ll.immed.op].ic.ll.flg |= TARGET;
-                    pc[i].ic.ll.flg |= JMP_ICODE; // So its not done twice
+                    pc[pc[i].ll.immed.op].ll.flg |= TARGET;
+                    pc[i].ll.flg |= JMP_ICODE; // So its not done twice
                 } else {
                     // This jump cannot be linked to a label
-                    pc[i].ic.ll.flg |= NO_LABEL;
+                    pc[i].ll.flg |= NO_LABEL;
                 }
             }
         }
@@ -235,16 +235,16 @@ static void dis1Line(int i, bool fWindow, chtype attr, int pass)
     // Do not try to display NO_CODE entries or synthetic instructions,
     // other than JMPs, that have been introduced for def/use analysis.
 
-    if ((option.asm1) && ((pIcode->ic.ll.flg & NO_CODE) || ((pIcode->ic.ll.flg & SYNTHETIC) &&
-        (pIcode->ic.ll.opcode != iJMP)))) {
+    if ((option.asm1) && ((pIcode->ll.flg & NO_CODE) || ((pIcode->ll.flg & SYNTHETIC) &&
+        (pIcode->ll.opcode != iJMP)))) {
         return;
-    } else if (pIcode->ic.ll.flg & NO_CODE) {
+    } else if (pIcode->ll.flg & NO_CODE) {
         return;
     }
 
     p = memset(buf, ' ', sizeof(buf)); // p points to the current position in buf[]
 
-    if (pIcode->ic.ll.flg & (TARGET | CASE)) {
+    if (pIcode->ll.flg & (TARGET | CASE)) {
         if (fWindow)      // Printing to a window?
             printw("\n"); // Yes, use the curses command
         else if (pass == 3)
@@ -254,26 +254,26 @@ static void dis1Line(int i, bool fWindow, chtype attr, int pass)
     }
 
     // Find next instruction label and print hex bytes
-    if (pIcode->ic.ll.flg & SYNTHETIC)
-        nextInst = pIcode->ic.ll.label;
+    if (pIcode->ll.flg & SYNTHETIC)
+        nextInst = pIcode->ll.label;
     else {
-        cb = (uint32_t)pIcode->ic.ll.numBytes;
-        nextInst = pIcode->ic.ll.label + cb;
+        cb = (uint32_t)pIcode->ll.numBytes;
+        nextInst = pIcode->ll.label + cb;
 
         if (pass != 3) { // Output hexa code in program image
             for (j = 0; j < cb; j++, p += 2)
-                sprintf(p, "%02X", prog.Image[pIcode->ic.ll.label + j]);
+                sprintf(p, "%02X", prog.Image[pIcode->ll.label + j]);
             *p = ' ';
         }
     }
 
     // Check if there is a symbol here
     selectTable(Label);
-    if (readVal(&buf[POS_LAB], pIcode->ic.ll.label, 0)) {
+    if (readVal(&buf[POS_LAB], pIcode->ll.label, 0)) {
         buf[strlen(buf)] = ':'; // Also removes the null
     }
 
-    else if (pIcode->ic.ll.flg & TARGET) // Symbols override Lnn labels
+    else if (pIcode->ll.flg & TARGET) // Symbols override Lnn labels
     {                                    // Print label
         if (!pl[i]) {
             pl[i] = ++lab;
@@ -285,21 +285,21 @@ static void dis1Line(int i, bool fWindow, chtype attr, int pass)
         buf[strlen(buf)] = ':'; // Also removes the null
     }
 
-    if (pIcode->ic.ll.opcode == iSIGNEX && (pIcode->ic.ll.flg & B)) {
-        pIcode->ic.ll.opcode = iCBW;
+    if (pIcode->ll.opcode == iSIGNEX && (pIcode->ll.flg & B)) {
+        pIcode->ll.opcode = iCBW;
     }
 
     if (pass == 3) {
-        strcpy(&buf[8], szOps[pIcode->ic.ll.opcode]);
+        strcpy(&buf[8], szOps[pIcode->ll.opcode]);
         buf[eop = strlen(buf)] = ' ';
         p = buf + 8 + (POS_OPR - POS_OPC);
     } else {
-        strcpy(&buf[POS_OPC], szOps[pIcode->ic.ll.opcode]);
+        strcpy(&buf[POS_OPC], szOps[pIcode->ll.opcode]);
         buf[eop = strlen(buf)] = ' ';
         p = buf + POS_OPR;
     }
 
-    switch (pIcode->ic.ll.opcode) {
+    switch (pIcode->ll.opcode) {
     case iADD:
     case iADC:
     case iSUB:
@@ -312,7 +312,7 @@ static void dis1Line(int i, bool fWindow, chtype attr, int pass)
     case iMOV:
     case iLEA:
     case iXCHG:
-        strcpy(p, strDst(pIcode->ic.ll.flg, &pIcode->ic.ll.dst));
+        strcpy(p, strDst(pIcode->ll.flg, &pIcode->ll.dst));
         strcat(p, strSrc(pIcode));
         break;
 
@@ -327,8 +327,8 @@ static void dis1Line(int i, bool fWindow, chtype attr, int pass)
     case iRCR:
     case iROL:
     case iROR:
-        strcpy(p, strDst(pIcode->ic.ll.flg | I, &pIcode->ic.ll.dst));
-        strcat(p, (pIcode->ic.ll.flg & I) ? strSrc(pIcode) : ", cl");
+        strcpy(p, strDst(pIcode->ll.flg | I, &pIcode->ll.dst));
+        strcat(p, (pIcode->ll.flg & I) ? strSrc(pIcode) : ", cl");
         break;
 
     case iINC:
@@ -336,14 +336,14 @@ static void dis1Line(int i, bool fWindow, chtype attr, int pass)
     case iNEG:
     case iNOT:
     case iPOP:
-        strcpy(p, strDst(pIcode->ic.ll.flg | I, &pIcode->ic.ll.dst));
+        strcpy(p, strDst(pIcode->ll.flg | I, &pIcode->ll.dst));
         break;
 
     case iPUSH:
-        if (pIcode->ic.ll.flg & I) {
-            strcpy(p + WID_PTR, strHex(pIcode->ic.ll.immed.op));
+        if (pIcode->ll.flg & I) {
+            strcpy(p + WID_PTR, strHex(pIcode->ll.immed.op));
         } else {
-            strcpy(p, strDst(pIcode->ic.ll.flg | I, &pIcode->ic.ll.dst));
+            strcpy(p, strDst(pIcode->ll.flg | I, &pIcode->ll.dst));
         }
         break;
 
@@ -352,18 +352,18 @@ static void dis1Line(int i, bool fWindow, chtype attr, int pass)
     case iMUL:
     case iIMUL:
     case iMOD:
-        if (pIcode->ic.ll.flg & I) {
-            strcat(strcpy(p, strDst(pIcode->ic.ll.flg, &pIcode->ic.ll.dst)), ", ");
-            formatRM(p + strlen(p), pIcode->ic.ll.flg, &pIcode->ic.ll.src);
+        if (pIcode->ll.flg & I) {
+            strcat(strcpy(p, strDst(pIcode->ll.flg, &pIcode->ll.dst)), ", ");
+            formatRM(p + strlen(p), pIcode->ll.flg, &pIcode->ll.src);
             strcat(p, strSrc(pIcode));
         } else
-            strcpy(p, strDst(pIcode->ic.ll.flg | I, &pIcode->ic.ll.src));
+            strcpy(p, strDst(pIcode->ll.flg | I, &pIcode->ll.src));
         break;
 
     case iLDS:
     case iLES:
     case iBOUND:
-        strcpy(p, strDst(pIcode->ic.ll.flg, &pIcode->ic.ll.dst));
+        strcpy(p, strDst(pIcode->ll.flg, &pIcode->ll.dst));
         strcat(strcat(p, ", dword ptr"), strSrc(pIcode) + 1);
         break;
 
@@ -392,53 +392,53 @@ static void dis1Line(int i, bool fWindow, chtype attr, int pass)
 
         // Check if there is a symbol here
         selectTable(Label);
-        if ((pIcode->ic.ll.immed.op < (uint32_t)numIcode) && // Ensure in range
-            readVal(p + WID_PTR, pc[pIcode->ic.ll.immed.op].ic.ll.label, 0)) {
+        if ((pIcode->ll.immed.op < (uint32_t)numIcode) && // Ensure in range
+            readVal(p + WID_PTR, pc[pIcode->ll.immed.op].ll.label, 0)) {
             break; // Symbolic label. Done
         }
 
-        if (pIcode->ic.ll.flg & NO_LABEL) {
-            strcpy(p + WID_PTR, strHex(pIcode->ic.ll.immed.op));
-        } else if (pIcode->ic.ll.flg & I) {
-            j = pIcode->ic.ll.immed.op;
+        if (pIcode->ll.flg & NO_LABEL) {
+            strcpy(p + WID_PTR, strHex(pIcode->ll.immed.op));
+        } else if (pIcode->ll.flg & I) {
+            j = pIcode->ll.immed.op;
             if (!pl[j]) // Forward jump
             {
                 pl[j] = ++lab;
             }
-            if (pIcode->ic.ll.opcode == iJMPF) {
+            if (pIcode->ll.opcode == iJMPF) {
                 sprintf(p, " far ptr L%d", pl[j]);
             } else {
                 sprintf(p + WID_PTR, "L%d", pl[j]);
             }
-        } else if (pIcode->ic.ll.opcode == iJMPF) {
+        } else if (pIcode->ll.opcode == iJMPF) {
             strcat(strcpy(p - 1, "dword ptr"), strSrc(pIcode) + 1);
         } else {
-            strcpy(p, strDst(I, &pIcode->ic.ll.src));
+            strcpy(p, strDst(I, &pIcode->ll.src));
         }
         break;
 
     case iCALL:
     case iCALLF:
-        if (pIcode->ic.ll.flg & I) {
-            sprintf(p, "%s ptr %s", (pIcode->ic.ll.opcode == iCALL) ? " near" : "  far",
-                    (pIcode->ic.ll.immed.proc.proc)->name);
-        } else if (pIcode->ic.ll.opcode == iCALLF) {
+        if (pIcode->ll.flg & I) {
+            sprintf(p, "%s ptr %s", (pIcode->ll.opcode == iCALL) ? " near" : "  far",
+                    (pIcode->ll.immed.proc.proc)->name);
+        } else if (pIcode->ll.opcode == iCALLF) {
             strcat(strcpy(p, "dword ptr"), strSrc(pIcode) + 1);
         } else {
-            strcpy(p, strDst(I, &pIcode->ic.ll.src));
+            strcpy(p, strDst(I, &pIcode->ll.src));
         }
         break;
 
     case iENTER:
-        strcat(strcpy(p + WID_PTR, strHex(pIcode->ic.ll.dst.off)), ", ");
-        strcat(p, strHex(pIcode->ic.ll.immed.op));
+        strcat(strcpy(p + WID_PTR, strHex(pIcode->ll.dst.off)), ", ");
+        strcat(p, strHex(pIcode->ll.immed.op));
         break;
 
     case iRET:
     case iRETF:
     case iINT:
-        if (pIcode->ic.ll.flg & I) {
-            strcpy(p + WID_PTR, strHex(pIcode->ic.ll.immed.op));
+        if (pIcode->ll.flg & I) {
+            strcpy(p + WID_PTR, strHex(pIcode->ll.immed.op));
         } else {
             buf[eop] = '\0';
         }
@@ -460,37 +460,37 @@ static void dis1Line(int i, bool fWindow, chtype attr, int pass)
     case iREP_INS:
     case iOUTS:
     case iREP_OUTS:
-        if (pIcode->ic.ll.src.segOver) {
-            (pIcode->ic.ll.opcode == iOUTS || pIcode->ic.ll.opcode == iREP_OUTS)
-                ? strcat(strcpy(p + WID_PTR, "dx, "), szPtr[pIcode->ic.ll.flg & B])
-                : strcpy(&buf[eop + 1], szPtr[pIcode->ic.ll.flg & B]);
-            if (pIcode->ic.ll.opcode == iLODS || pIcode->ic.ll.opcode == iREP_LODS ||
-                pIcode->ic.ll.opcode == iOUTS || pIcode->ic.ll.opcode == iREP_OUTS) {
-                strcat(p, szWreg[pIcode->ic.ll.src.segOver - rAX]);
+        if (pIcode->ll.src.segOver) {
+            (pIcode->ll.opcode == iOUTS || pIcode->ll.opcode == iREP_OUTS)
+                ? strcat(strcpy(p + WID_PTR, "dx, "), szPtr[pIcode->ll.flg & B])
+                : strcpy(&buf[eop + 1], szPtr[pIcode->ll.flg & B]);
+            if (pIcode->ll.opcode == iLODS || pIcode->ll.opcode == iREP_LODS ||
+                pIcode->ll.opcode == iOUTS || pIcode->ll.opcode == iREP_OUTS) {
+                strcat(p, szWreg[pIcode->ll.src.segOver - rAX]);
             } else {
-                strcat(strcat(p, "es:[di], "), szWreg[pIcode->ic.ll.src.segOver - rAX]);
+                strcat(strcat(p, "es:[di], "), szWreg[pIcode->ll.src.segOver - rAX]);
             }
             strcat(p, ":[si]");
         } else
-            strcpy(&buf[eop], (pIcode->ic.ll.flg & B) ? "B" : "W");
+            strcpy(&buf[eop], (pIcode->ll.flg & B) ? "B" : "W");
         break;
 
     case iXLAT:
-        if (pIcode->ic.ll.src.segOver) {
+        if (pIcode->ll.src.segOver) {
             strcpy(&buf[eop + 1], szPtr[1]);
-            strcat(strcat(p, szWreg[pIcode->ic.ll.src.segOver - rAX]), ":[bx]");
+            strcat(strcat(p, szWreg[pIcode->ll.src.segOver - rAX]), ":[bx]");
         } else
             buf[eop] = '\0';
         break;
 
     case iIN:
-        strcpy(p + WID_PTR, (pIcode->ic.ll.flg & B) ? "al, " : "ax, ");
-        strcat(p + WID_PTR, (pIcode->ic.ll.flg & I) ? strHex(pIcode->ic.ll.immed.op) : "dx");
+        strcpy(p + WID_PTR, (pIcode->ll.flg & B) ? "al, " : "ax, ");
+        strcat(p + WID_PTR, (pIcode->ll.flg & I) ? strHex(pIcode->ll.immed.op) : "dx");
         break;
 
     case iOUT:
-        strcpy(p + WID_PTR, (pIcode->ic.ll.flg & I) ? strHex(pIcode->ic.ll.immed.op) : "dx");
-        strcat(p + WID_PTR, (pIcode->ic.ll.flg & B) ? ", al" : ", ax");
+        strcpy(p + WID_PTR, (pIcode->ll.flg & I) ? strHex(pIcode->ll.immed.op) : "dx");
+        strcat(p + WID_PTR, (pIcode->ll.flg & B) ? ", al" : ", ax");
         break;
 
     default:
@@ -499,59 +499,59 @@ static void dis1Line(int i, bool fWindow, chtype attr, int pass)
     }
 
     // Comments
-    if (pIcode->ic.ll.flg & SYNTHETIC) {
+    if (pIcode->ll.flg & SYNTHETIC) {
         fImpure = FALSE;
     } else {
-        for (j = pIcode->ic.ll.label, fImpure = 0; j > 0 && j < (int)nextInst; j++) {
+        for (j = pIcode->ll.label, fImpure = 0; j > 0 && j < (int)nextInst; j++) {
             fImpure |= BITMAP(j, BM_DATA);
         }
     }
 
     // Check for user supplied comment
     selectTable(Comment);
-    if (readVal(cbuf, pIcode->ic.ll.label, 0)) {
+    if (readVal(cbuf, pIcode->ll.label, 0)) {
         buf[strlen(buf)] = ' '; // Removes the null
         buf[POS_CMT] = ';';
         strcpy(buf + POS_CMT + 1, cbuf);
     }
 
     else if (fImpure ||
-             (pIcode->ic.ll.flg & (SWITCH | CASE | SEG_IMMED | IMPURE | SYNTHETIC | TERMINATES))) {
+             (pIcode->ll.flg & (SWITCH | CASE | SEG_IMMED | IMPURE | SYNTHETIC | TERMINATES))) {
         buf[strlen(buf)] = ' ';
         buf[POS_CMT] = '\0';
-        if (pIcode->ic.ll.flg & CASE) {
-            sprintf(buf + POS_CMT, ";Case l%d", pIcode->ic.ll.caseTbl.numEntries);
+        if (pIcode->ll.flg & CASE) {
+            sprintf(buf + POS_CMT, ";Case l%d", pIcode->ll.caseTbl.numEntries);
         }
-        if (pIcode->ic.ll.flg & SWITCH) {
+        if (pIcode->ll.flg & SWITCH) {
             strcat(buf, ";Switch ");
         }
         if (fImpure) {
             strcat(buf, ";Accessed as data ");
         }
-        if (pIcode->ic.ll.flg & IMPURE) {
+        if (pIcode->ll.flg & IMPURE) {
             strcat(buf, ";Impure operand ");
         }
-        if (pIcode->ic.ll.flg & SEG_IMMED) {
+        if (pIcode->ll.flg & SEG_IMMED) {
             strcat(buf, ";Segment constant");
         }
-        if (pIcode->ic.ll.flg & TERMINATES) {
+        if (pIcode->ll.flg & TERMINATES) {
             strcat(buf, ";Exit to DOS");
         }
     }
 
-    if (pIcode->ic.ll.opcode == iINT) // Comment on iINT icodes
+    if (pIcode->ll.opcode == iINT) // Comment on iINT icodes
         writeIntComment(pIcode, buf);
 
-    if (!(pIcode->ic.ll.flg & SYNTHETIC)) { // Display output line
+    if (!(pIcode->ll.flg & SYNTHETIC)) { // Display output line
         if (fWindow) {
-            uint16_t off = (pIcode->ic.ll.label - ((uint32_t)pProc->state.r[rCS] << 4));
+            uint16_t off = (pIcode->ll.label - ((uint32_t)pProc->state.r[rCS] << 4));
             attrset(attr);
             printw("%04X %s\n", off, buf);
             attrset(A_NORMAL);
         } else if (pass == 3) // output to .b code buffer
             appendStrTab(&cCode.code, "%s\n", buf);
         else // output to .a1 or .a2 file
-            fprintf(fp, "%03d %06X %s\n", i, pIcode->ic.ll.label, buf);
+            fprintf(fp, "%03d %06X %s\n", i, pIcode->ll.label, buf);
     } else // SYNTHETIC instruction
     {
         strcat(buf, ";Synthetic inst");
@@ -620,12 +620,12 @@ static char *strSrc(PICODE pc)
 {
     static char buf[30] = { ", " };
 
-    if (pc->ic.ll.flg & I)
-        strcpy(buf + 2, strHex(pc->ic.ll.immed.op));
-    else if (pc->ic.ll.flg & IM_SRC) // level 2
+    if (pc->ll.flg & I)
+        strcpy(buf + 2, strHex(pc->ll.immed.op));
+    else if (pc->ll.flg & IM_SRC) // level 2
         strcpy(buf + 2, "dx:ax");
     else
-        formatRM(buf + 2, pc->ic.ll.flg, &pc->ic.ll.src);
+        formatRM(buf + 2, pc->ll.flg, &pc->ll.src);
 
     return buf;
 }
@@ -659,8 +659,8 @@ void clrTitle(void)
     erase(); // No need to use clear(), as much of the screen may not need repainting
     attrset(A_BOLD);
     mvprintw(0, 0, "Proc %s at %06lX (%04X:%04X): %d bytes of parameters ", pProc->name,
-             pProc->Icode.icode[0].ic.ll.label, pProc->state.r[rCS],
-             (uint16_t)(pProc->Icode.icode[0].ic.ll.label - ((uint32_t)(pProc->state.r[rCS]) << 4)),
+             pProc->Icode.icode[0].ll.label, pProc->state.r[rCS],
+             (uint16_t)(pProc->Icode.icode[0].ll.label - ((uint32_t)(pProc->state.r[rCS]) << 4)),
              pProc->cbParam);
     if (pProc->flg & PROC_ISLIB)
         printw(" LIBRARY");
@@ -681,23 +681,23 @@ void updateScr(bool new)
     if (new || (pcCur > pcBot) || (pcCur < pcTop)) { // We need to redo the screen completely
         icTop = icCur;
         for (x = 0; x < NSCROLL; x++) {
-            if (icTop && pc[icTop - 1].ic.ll.label + (uint32_t)pc[icTop - 1].ic.ll.numBytes ==
-                pc[icTop].ic.ll.label) { // Then this instruction is contiguous with the current
+            if (icTop && pc[icTop - 1].ll.label + (uint32_t)pc[icTop - 1].ll.numBytes ==
+                pc[icTop].ll.label) { // Then this instruction is contiguous with the current
                 icTop--;
             } else
                 break;
         }
-        pcTop = pc[icTop].ic.ll.label;
+        pcTop = pc[icTop].ll.label;
     }
 
     move(1, 0);
     nextInst = pcTop;
     for (y = 1, ic = icTop; y < LINES - 1; ic++) {
-        if ((ic >= numIcode) || (nextInst != pc[ic].ic.ll.label)) {
+        if ((ic >= numIcode) || (nextInst != pc[ic].ll.label)) {
             if (labelSrch(pc, numIcode, nextInst, &i)) {
                 ic = i;
             } else {
-                pcLast = pc[ic - 1].ic.ll.label; // Remember end of proc
+                pcLast = pc[ic - 1].ll.label; // Remember end of proc
                 break;                           // Must be past last
             }
         }
@@ -710,7 +710,7 @@ void updateScr(bool new)
         getyx(stdscr, y, x);
 
         if (ic == numIcode - 1) {
-            switch (pc[ic].ic.ll.opcode) {
+            switch (pc[ic].ll.opcode) {
             case iJMP:
             case iJMPF:
             case iRET:
@@ -786,7 +786,7 @@ void popPosStack(void)
             setProc(posStack[iPS].pProc);
         }
         icCur = posStack[iPS].ic;
-        pcCur = pc[icCur].ic.ll.label;
+        pcCur = pc[icCur].ll.label;
     } else
         iPS++; // Stack empty.. don't pop
 }
@@ -854,16 +854,16 @@ static void setProc(PPROC proc)
 
     // Bind jump offsets to labels
     for (int i = 0; i < numIcode; i++) {
-        if ((pc[i].ic.ll.flg & I) && !(pc[i].ic.ll.flg & JMP_ICODE) &&
-            JmpInst(pc[i].ic.ll.opcode)) {
+        if ((pc[i].ll.flg & I) && !(pc[i].ll.flg & JMP_ICODE) &&
+            JmpInst(pc[i].ll.opcode)) {
             // Immediate jump instructions. Make dest an icode index
-            if (labelSrch(pc, numIcode, pc[i].ic.ll.immed.op, (int *)&pc[i].ic.ll.immed.op)) {
+            if (labelSrch(pc, numIcode, pc[i].ll.immed.op, (int *)&pc[i].ll.immed.op)) {
                 // This icode is the target of a jump
-                pc[pc[i].ic.ll.immed.op].ic.ll.flg |= TARGET;
-                pc[i].ic.ll.flg |= JMP_ICODE; // So its not done twice
+                pc[pc[i].ll.immed.op].ll.flg |= TARGET;
+                pc[i].ll.flg |= JMP_ICODE; // So its not done twice
             } else {
                 // This jump cannot be linked to a label
-                pc[i].ic.ll.flg |= NO_LABEL;
+                pc[i].ll.flg |= NO_LABEL;
             }
         }
     }
@@ -899,7 +899,7 @@ void interactDis(PPROC initProc, int initIC)
     setProc(initProc);
     if (initIC) {
         icCur = initIC;
-        pcCur = pc[icCur].ic.ll.label;
+        pcCur = pc[icCur].ll.label;
     }
 
     // Initialise the symbol table
@@ -916,7 +916,7 @@ void interactDis(PPROC initProc, int initIC)
         case KEY_DOWN:
             if (pcCur >= pcLast)
                 continue; // Ignore it
-            pcCur += pc[icCur].ic.ll.numBytes;
+            pcCur += pc[icCur].ll.numBytes;
             labelSrch(pc, numIcode, pcCur, &icCur);
             if (pcCur >= pcBot) {
                 // We have gone past the bottom line. Scroll a few lines
@@ -924,7 +924,7 @@ void interactDis(PPROC initProc, int initIC)
                     if (pcTop >= pcLast)
                         break;
 
-                    pcTop += pc[icTop].ic.ll.numBytes;
+                    pcTop += pc[icTop].ll.numBytes;
 
                     if (labelSrch(pc, numIcode, pcTop, &i))
                         icTop = i;
@@ -938,17 +938,17 @@ void interactDis(PPROC initProc, int initIC)
         case KEY_UP:
             // First simply try the prev icode
             if ((icCur == 0) ||
-                (pc[icCur - 1].ic.ll.label + (uint32_t)pc[icCur].ic.ll.numBytes) != pcCur) {
+                (pc[icCur - 1].ll.label + (uint32_t)pc[icCur].ll.numBytes) != pcCur) {
                 for (i = 0; i < numIcode; i++) {
-                    if (pc[i].ic.ll.label + (uint32_t)pc[i].ic.ll.numBytes == pcCur) {
+                    if (pc[i].ll.label + (uint32_t)pc[i].ll.numBytes == pcCur) {
                         break; // This is the one!
                     }
                 }
-                if (pc[i].ic.ll.label + pc[i].ic.ll.numBytes != pcCur)
+                if (pc[i].ll.label + pc[i].ll.numBytes != pcCur)
                     break; // Not found. Sorry!
                 icCur = i;
             }
-            pcCur = pc[icCur].ic.ll.label;
+            pcCur = pc[icCur].ll.label;
             updateScr(false);
             break;
 
@@ -957,9 +957,9 @@ void interactDis(PPROC initProc, int initIC)
 #endif
         case '2': // In case shift right not avail
             // As for right arrow, but considers source operand first
-            if (pc[icCur].ic.ll.src.off != 0) {
+            if (pc[icCur].ll.src.off != 0) {
                 pushPosStack();
-                pcCur = pc[icCur].ic.ll.src.off;
+                pcCur = pc[icCur].ll.src.off;
                 if (!labelSrch(pc, numIcode, pcCur, &icCur))
                     break;
                 updateScr(false);
@@ -967,43 +967,43 @@ void interactDis(PPROC initProc, int initIC)
         // Fall through to KEY_RIGHT processing
 
         case KEY_RIGHT:
-            if (pc[icCur].ic.ll.flg & I) {
-                if ((pc[icCur].ic.ll.opcode >= iJB) && (pc[icCur].ic.ll.opcode <= iJMPF)) {
+            if (pc[icCur].ll.flg & I) {
+                if ((pc[icCur].ll.opcode >= iJB) && (pc[icCur].ll.opcode <= iJMPF)) {
                     // An immediate jump op. Jump to it
                     pushPosStack();
-                    if (pc[icCur].ic.ll.flg & JMP_ICODE) {
+                    if (pc[icCur].ll.flg & JMP_ICODE) {
                         // immed.op is an icode offset
-                        icCur = pc[icCur].ic.ll.immed.op;
-                        pcCur = pc[icCur].ic.ll.label;
+                        icCur = pc[icCur].ll.immed.op;
+                        pcCur = pc[icCur].ll.label;
                     } else {
                         /* immed.op is still an image offset.
                            Quite likely we need to scan */
-                        pcCur = pc[icCur].ic.ll.immed.op;
+                        pcCur = pc[icCur].ll.immed.op;
                         if ((icCur = checkScanned(pcCur)) == -1)
                             break;
                     }
-                } else if ((pc[icCur].ic.ll.opcode == iCALL) ||
-                           (pc[icCur].ic.ll.opcode == iCALLF)) {
+                } else if ((pc[icCur].ll.opcode == iCALL) ||
+                           (pc[icCur].ll.opcode == iCALLF)) {
                     // The dest is a pointer to a proc struct
                     pushPosStack();
-                    setProc((PPROC)pc[icCur].ic.ll.immed.op);
+                    setProc((PPROC)pc[icCur].ll.immed.op);
                 } else {
                     // Other immediate
                     pushPosStack();
-                    pcCur = pc[icCur].ic.ll.immed.op;
+                    pcCur = pc[icCur].ll.immed.op;
                     dispData(pProc->state.r[rDS]);
                     break;
                 }
-            } else if (pc[icCur].ic.ll.dst.off != 0) {
+            } else if (pc[icCur].ll.dst.off != 0) {
                 pushPosStack();
-                pcCur = pc[icCur].ic.ll.dst.off;
+                pcCur = pc[icCur].ll.dst.off;
                 if (!labelSrch(pc, numIcode, pcCur, &icCur)) {
                     dispData(pProc->state.r[rDS]);
                     break;
                 }
-            } else if (pc[icCur].ic.ll.src.off != 0) {
+            } else if (pc[icCur].ll.src.off != 0) {
                 pushPosStack();
-                pcCur = pc[icCur].ic.ll.src.off;
+                pcCur = pc[icCur].ll.src.off;
                 if (!labelSrch(pc, numIcode, pcCur, &icCur)) {
                     dispData(pProc->state.r[rDS]);
                     break;
@@ -1014,7 +1014,7 @@ void interactDis(PPROC initProc, int initIC)
 
         case KEY_LEFT:
             popPosStack();
-            pcCur = pc[icCur].ic.ll.label;
+            pcCur = pc[icCur].ll.label;
             updateScr(true);
             break;
 
@@ -1027,8 +1027,8 @@ void interactDis(PPROC initProc, int initIC)
         case KEY_PPAGE:
             pcTop -= (LINES - 2) * 2; // Average of 2 bytes per inst
             for (i = 0; i < numIcode; i++) {
-                if ((pc[i].ic.ll.label <= pcTop) &&
-                    (pc[i].ic.ll.label + (uint32_t)pc[i].ic.ll.numBytes >= pcTop)) {
+                if ((pc[i].ll.label <= pcTop) &&
+                    (pc[i].ll.label + (uint32_t)pc[i].ll.numBytes >= pcTop)) {
                     break; // This is the spot! */
                 }
             }
@@ -1037,7 +1037,7 @@ void interactDis(PPROC initProc, int initIC)
                 i = 0;
 
             icCur = icTop = i;
-            pcCur = pcTop = pc[i].ic.ll.label;
+            pcCur = pcTop = pc[i].ll.label;
             updateScr(false);
             break;
 
@@ -1217,11 +1217,11 @@ bool callArg(uint16_t off, char *sym)
 static void flops(PICODE pIcode)
 {
     char bf[30];
-    uint8_t op = pIcode->ic.ll.immed.op;
+    uint8_t op = pIcode->ll.immed.op;
 
     // Note that op is set to the escape number, e.g. esc 0x38 is FILD
 
-    if ((pIcode->ic.ll.dst.regi == 0) || (pIcode->ic.ll.dst.regi >= INDEXBASE)) {
+    if ((pIcode->ll.dst.regi == 0) || (pIcode->ll.dst.regi >= INDEXBASE)) {
         /* The mod/rm mod bits are not set to 11 (i.e. register).
            This is the normal floating point opcode */
         strcpy(&buf[POS_OPC], szFlops1[op]);
@@ -1255,7 +1255,7 @@ static void flops(PICODE pIcode)
                 }
             }
 
-        formatRM(bf + 10, pIcode->ic.ll.flg, &pIcode->ic.ll.dst);
+        formatRM(bf + 10, pIcode->ll.flg, &pIcode->ll.dst);
         strcpy(p, bf);
     } else {
         /* The mod/rm mod bits are set to 11 (i.e. register).
@@ -1265,36 +1265,36 @@ static void flops(PICODE pIcode)
            a separate table is used (szFlops2). */
         switch (op) {
         case 0x0C:
-            strcpy(&buf[POS_OPC], szFlops0C[pIcode->ic.ll.dst.regi - rAX]);
+            strcpy(&buf[POS_OPC], szFlops0C[pIcode->ll.dst.regi - rAX]);
             break;
         case 0x0D:
-            strcpy(&buf[POS_OPC], szFlops0D[pIcode->ic.ll.dst.regi - rAX]);
+            strcpy(&buf[POS_OPC], szFlops0D[pIcode->ll.dst.regi - rAX]);
             break;
         case 0x0E:
-            strcpy(&buf[POS_OPC], szFlops0E[pIcode->ic.ll.dst.regi - rAX]);
+            strcpy(&buf[POS_OPC], szFlops0E[pIcode->ll.dst.regi - rAX]);
             break;
         case 0x0F:
-            strcpy(&buf[POS_OPC], szFlops0F[pIcode->ic.ll.dst.regi - rAX]);
+            strcpy(&buf[POS_OPC], szFlops0F[pIcode->ll.dst.regi - rAX]);
             break;
         case 0x15:
-            strcpy(&buf[POS_OPC], szFlops15[pIcode->ic.ll.dst.regi - rAX]);
+            strcpy(&buf[POS_OPC], szFlops15[pIcode->ll.dst.regi - rAX]);
             break;
         case 0x1C:
-            strcpy(&buf[POS_OPC], szFlops1C[pIcode->ic.ll.dst.regi - rAX]);
+            strcpy(&buf[POS_OPC], szFlops1C[pIcode->ll.dst.regi - rAX]);
             break;
         case 0x33:
-            strcpy(&buf[POS_OPC], szFlops33[pIcode->ic.ll.dst.regi - rAX]);
+            strcpy(&buf[POS_OPC], szFlops33[pIcode->ll.dst.regi - rAX]);
             break;
         case 0x3C:
-            strcpy(&buf[POS_OPC], szFlops3C[pIcode->ic.ll.dst.regi - rAX]);
+            strcpy(&buf[POS_OPC], szFlops3C[pIcode->ll.dst.regi - rAX]);
             break;
         default:
             strcpy(&buf[POS_OPC], szFlops2[op]);
             buf[strlen(buf)] = ' ';
             if ((op >= 0x20) && (op <= 0x27)) { // This is the ST(i), ST form.
-                sprintf(&buf[POS_OPR2], "ST(%d),ST", pIcode->ic.ll.dst.regi - rAX);
+                sprintf(&buf[POS_OPR2], "ST(%d),ST", pIcode->ll.dst.regi - rAX);
             } else { // ST, ST(i)
-                sprintf(&buf[POS_OPR2], "ST,ST(%d)", pIcode->ic.ll.dst.regi - rAX);
+                sprintf(&buf[POS_OPR2], "ST,ST(%d)", pIcode->ll.dst.regi - rAX);
             }
 
             break;

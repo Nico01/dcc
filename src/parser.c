@@ -139,44 +139,44 @@ static void FollowCtrl(PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
     bool done = false;
 
     while (!done && !(err = scan(pstate->IP, &Icode))) {
-        pstate->IP += Icode.ic.ll.numBytes;
-        setBits(BM_CODE, Icode.ic.ll.label, Icode.ic.ll.numBytes);
+        pstate->IP += Icode.ll.numBytes;
+        setBits(BM_CODE, Icode.ll.label, Icode.ll.numBytes);
 
         process_operands(&Icode, pProc, pstate, pProc->Icode.numIcode);
 
         // Keep track of interesting instruction flags in procedure
-        pProc->flg |= (Icode.ic.ll.flg & (NOT_HLL | FLOAT_OP));
+        pProc->flg |= (Icode.ll.flg & (NOT_HLL | FLOAT_OP));
 
         // Check if this instruction has already been parsed
-        if (labelSrch(pProc->Icode.icode, pProc->Icode.numIcode, Icode.ic.ll.label, &lab)) { // Synthetic jump
+        if (labelSrch(pProc->Icode.icode, pProc->Icode.numIcode, Icode.ll.label, &lab)) { // Synthetic jump
             Icode.type = LOW_LEVEL;
-            Icode.ic.ll.opcode = iJMP;
-            Icode.ic.ll.flg = I | SYNTHETIC | NO_OPS;
-            Icode.ic.ll.immed.op = pProc->Icode.icode[lab].ic.ll.label;
-            Icode.ic.ll.label = SynthLab++;
+            Icode.ll.opcode = iJMP;
+            Icode.ll.flg = I | SYNTHETIC | NO_OPS;
+            Icode.ll.immed.op = pProc->Icode.icode[lab].ll.label;
+            Icode.ll.label = SynthLab++;
         }
 
         // Copy Icode to Proc
-        if ((Icode.ic.ll.opcode == iDIV) || (Icode.ic.ll.opcode == iIDIV)) {
+        if ((Icode.ll.opcode == iDIV) || (Icode.ll.opcode == iIDIV)) {
             // MOV rTMP, reg
             memset(&eIcode, 0, sizeof(ICODE));
             eIcode.type = LOW_LEVEL;
-            eIcode.ic.ll.opcode = iMOV;
-            eIcode.ic.ll.dst.regi = rTMP;
+            eIcode.ll.opcode = iMOV;
+            eIcode.ll.dst.regi = rTMP;
 
-            if (Icode.ic.ll.flg & B) {
-                eIcode.ic.ll.flg |= B;
-                eIcode.ic.ll.src.regi = rAX;
+            if (Icode.ll.flg & B) {
+                eIcode.ll.flg |= B;
+                eIcode.ll.src.regi = rAX;
                 setRegDU(&eIcode, rAX, USE);
             } else { // implicit dx:ax
-                eIcode.ic.ll.flg |= IM_SRC;
+                eIcode.ll.flg |= IM_SRC;
                 setRegDU(&eIcode, rAX, USE);
                 setRegDU(&eIcode, rDX, USE);
             }
 
             setRegDU(&eIcode, rTMP, DEF);
-            eIcode.ic.ll.flg |= SYNTHETIC;
-            eIcode.ic.ll.label = Icode.ic.ll.label;
+            eIcode.ll.flg |= SYNTHETIC;
+            eIcode.ll.label = Icode.ll.label;
             pIcode = newIcode(&pProc->Icode, &eIcode);
 
             // iDIV, iIDIV
@@ -185,47 +185,47 @@ static void FollowCtrl(PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
             // iMOD
             memset(&eIcode, 0, sizeof(ICODE));
             eIcode.type = LOW_LEVEL;
-            eIcode.ic.ll.opcode = iMOD;
-            memcpy(&eIcode.ic.ll.src, &Icode.ic.ll.src, sizeof(ICODEMEM));
+            eIcode.ll.opcode = iMOD;
+            memcpy(&eIcode.ll.src, &Icode.ll.src, sizeof(ICODEMEM));
             memcpy(&eIcode.du, &Icode.du, sizeof(DU_ICODE));
-            eIcode.ic.ll.flg = (Icode.ic.ll.flg | SYNTHETIC);
-            eIcode.ic.ll.label = SynthLab++;
+            eIcode.ll.flg = (Icode.ll.flg | SYNTHETIC);
+            eIcode.ll.label = SynthLab++;
             pIcode = newIcode(&pProc->Icode, &eIcode);
         }
-        else if (Icode.ic.ll.opcode == iXCHG) { // MOV rTMP, regDst
+        else if (Icode.ll.opcode == iXCHG) { // MOV rTMP, regDst
             memset(&eIcode, 0, sizeof(ICODE));
             eIcode.type = LOW_LEVEL;
-            eIcode.ic.ll.opcode = iMOV;
-            eIcode.ic.ll.dst.regi = rTMP;
-            eIcode.ic.ll.src.regi = Icode.ic.ll.dst.regi;
+            eIcode.ll.opcode = iMOV;
+            eIcode.ll.dst.regi = rTMP;
+            eIcode.ll.src.regi = Icode.ll.dst.regi;
             setRegDU(&eIcode, rTMP, DEF);
-            setRegDU(&eIcode, eIcode.ic.ll.src.regi, USE);
-            eIcode.ic.ll.flg |= SYNTHETIC;
-            eIcode.ic.ll.label = Icode.ic.ll.label;
+            setRegDU(&eIcode, eIcode.ll.src.regi, USE);
+            eIcode.ll.flg |= SYNTHETIC;
+            eIcode.ll.label = Icode.ll.label;
             pIcode = newIcode(&pProc->Icode, &eIcode);
 
             // MOV regDst, regSrc
-            Icode.ic.ll.opcode = iMOV;
-            Icode.ic.ll.flg |= SYNTHETIC;
+            Icode.ll.opcode = iMOV;
+            Icode.ll.flg |= SYNTHETIC;
             pIcode = newIcode(&pProc->Icode, &Icode);
-            Icode.ic.ll.opcode = iXCHG; // for next case
+            Icode.ll.opcode = iXCHG; // for next case
 
             // MOV regSrc, rTMP
             memset(&eIcode, 0, sizeof(ICODE));
             eIcode.type = LOW_LEVEL;
-            eIcode.ic.ll.opcode = iMOV;
-            eIcode.ic.ll.dst.regi = Icode.ic.ll.src.regi;
-            eIcode.ic.ll.src.regi = rTMP;
-            setRegDU(&eIcode, eIcode.ic.ll.dst.regi, DEF);
+            eIcode.ll.opcode = iMOV;
+            eIcode.ll.dst.regi = Icode.ll.src.regi;
+            eIcode.ll.src.regi = rTMP;
+            setRegDU(&eIcode, eIcode.ll.dst.regi, DEF);
             setRegDU(&eIcode, rTMP, USE);
-            eIcode.ic.ll.flg |= SYNTHETIC;
-            eIcode.ic.ll.label = SynthLab++;
+            eIcode.ll.flg |= SYNTHETIC;
+            eIcode.ll.label = SynthLab++;
             pIcode = newIcode(&pProc->Icode, &eIcode);
         }
         else
             pIcode = newIcode(&pProc->Icode, &Icode);
 
-        switch (Icode.ic.ll.opcode) {
+        switch (Icode.ll.opcode) {
         default:
             break;
         // Conditional jumps
@@ -257,15 +257,15 @@ static void FollowCtrl(PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
 
             /* This sets up range check for indexed JMPs hopefully
                Handles JA/JAE for fall through and JB/JBE on branch */
-            if (ip > 0 && prev->ic.ll.opcode == iCMP && (prev->ic.ll.flg & I)) {
-                pstate->JCond.immed = (int16_t)prev->ic.ll.immed.op;
+            if (ip > 0 && prev->ll.opcode == iCMP && (prev->ll.flg & I)) {
+                pstate->JCond.immed = (int16_t)prev->ll.immed.op;
                 
-                if (Icode.ic.ll.opcode == iJA || Icode.ic.ll.opcode == iJBE)
+                if (Icode.ll.opcode == iJA || Icode.ll.opcode == iJBE)
                     pstate->JCond.immed++;
-                if (Icode.ic.ll.opcode == iJAE || Icode.ic.ll.opcode == iJA)
-                    pstate->JCond.regi = prev->ic.ll.dst.regi;
+                if (Icode.ll.opcode == iJAE || Icode.ll.opcode == iJA)
+                    pstate->JCond.regi = prev->ll.dst.regi;
                 
-                fBranch = (Icode.ic.ll.opcode == iJB || Icode.ic.ll.opcode == iJBE);
+                fBranch = (Icode.ll.opcode == iJB || Icode.ll.opcode == iJBE);
             }
 
             memcpy(&StCopy, pstate, sizeof(STATE));
@@ -274,7 +274,7 @@ static void FollowCtrl(PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
             FollowCtrl(pProc, pcallGraph, &StCopy);
 
             if (fBranch) // Do branching code
-                pstate->JCond.regi = prev->ic.ll.dst.regi;
+                pstate->JCond.regi = prev->ll.dst.regi;
             pIcode = &pProc->Icode.icode[ip]; // next icode
         }                                     // Fall through
 
@@ -293,7 +293,7 @@ static void FollowCtrl(PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
         // Returns
         case iRET:
         case iRETF:
-            pProc->flg |= (Icode.ic.ll.opcode == iRET) ? PROC_NEAR : PROC_FAR;
+            pProc->flg |= (Icode.ll.opcode == iRET) ? PROC_NEAR : PROC_FAR;
         // Fall through
         case iIRET:
             pProc->flg &= ~TERMINATES;
@@ -301,13 +301,13 @@ static void FollowCtrl(PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
             break;
 
         case iINT:
-            if (Icode.ic.ll.immed.op == 0x21 && pstate->f[rAH]) {
+            if (Icode.ll.immed.op == 0x21 && pstate->f[rAH]) {
                 int funcNum = pstate->r[rAH];
                 int operand;
                 size_t size;
 
                 // Save function number
-                pProc->Icode.icode[pProc->Icode.numIcode - 1].ic.ll.dst.off = funcNum;
+                pProc->Icode.icode[pProc->Icode.numIcode - 1].ll.dst.off = funcNum;
 
                 // Program termination: int21h, fn 00h, 31h, 4Ch
                 done = (funcNum == 0x00 || funcNum == 0x31 || funcNum == 0x4C);
@@ -320,12 +320,12 @@ static void FollowCtrl(PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
                         size = strSize(&prog.Image[operand + 0x100], '$');
                         updateSymType(operand, TYPE_STR, size);
                     }
-            } else if ((Icode.ic.ll.immed.op == 0x2F) && (pstate->f[rAH]))
-                pProc->Icode.icode[pProc->Icode.numIcode - 1].ic.ll.dst.off = pstate->r[rAH];
+            } else if ((Icode.ll.immed.op == 0x2F) && (pstate->f[rAH]))
+                pProc->Icode.icode[pProc->Icode.numIcode - 1].ll.dst.off = pstate->r[rAH];
             else // Program termination: int20h, int27h
-                done = (Icode.ic.ll.immed.op == 0x20 || Icode.ic.ll.immed.op == 0x27);
+                done = (Icode.ll.immed.op == 0x20 || Icode.ll.immed.op == 0x27);
             if (done)
-                pIcode->ic.ll.flg |= TERMINATES;
+                pIcode->ll.flg |= TERMINATES;
             break;
 
         case iMOV:
@@ -338,8 +338,8 @@ static void FollowCtrl(PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
             break; **** HERE ***/
 
         case iSHL:
-            if (pstate->JCond.regi == Icode.ic.ll.dst.regi) {
-                if ((Icode.ic.ll.flg & I) && Icode.ic.ll.immed.op == 1)
+            if (pstate->JCond.regi == Icode.ll.dst.regi) {
+                if ((Icode.ll.flg & I) && Icode.ll.immed.op == 1)
                     pstate->JCond.immed *= 2;
                 else
                     pstate->JCond.regi = 0;
@@ -347,17 +347,17 @@ static void FollowCtrl(PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
             break;
 
         case iLEA:
-            if (Icode.ic.ll.src.regi == 0) // direct mem offset
-                setState(pstate, Icode.ic.ll.dst.regi, Icode.ic.ll.src.off);
+            if (Icode.ll.src.regi == 0) // direct mem offset
+                setState(pstate, Icode.ll.dst.regi, Icode.ll.src.off);
             break;
 
         case iLDS:
         case iLES:
-            if ((psym = lookupAddr(&Icode.ic.ll.src, pstate, 4, USE))) {
+            if ((psym = lookupAddr(&Icode.ll.src, pstate, 4, USE))) {
                 offset = LH(&prog.Image[psym->label]);
-                setState(pstate, (Icode.ic.ll.opcode == iLDS) ? rDS : rES,
+                setState(pstate, (Icode.ll.opcode == iLDS) ? rDS : rES,
                          LH(&prog.Image[psym->label + 2]));
-                setState(pstate, Icode.ic.ll.dst.regi, (int16_t)offset);
+                setState(pstate, Icode.ll.dst.regi, (int16_t)offset);
                 psym->type = TYPE_PTR;
             }
             break;
@@ -368,12 +368,12 @@ static void FollowCtrl(PPROC pProc, PCALL_GRAPH pcallGraph, PSTATE pstate)
         pProc->flg &= ~TERMINATES;
 
         if (err == INVALID_386OP || err == INVALID_OPCODE) {
-            fatalError(err, prog.Image[Icode.ic.ll.label], Icode.ic.ll.label);
+            fatalError(err, prog.Image[Icode.ll.label], Icode.ll.label);
             pProc->flg |= PROC_BADINST;
         } else if (err == IP_OUT_OF_RANGE)
-            fatalError(err, Icode.ic.ll.label);
+            fatalError(err, Icode.ll.label);
         else
-            reportError(err, Icode.ic.ll.label);
+            reportError(err, Icode.ll.label);
     }
 }
 
@@ -386,10 +386,10 @@ static bool process_JMP(PICODE pIcode, PPROC pProc, PSTATE pstate, PCALL_GRAPH p
     uint32_t i, k, target;
     int tmp;
 
-    if (pIcode->ic.ll.flg & I) {
-        if (pIcode->ic.ll.opcode == iJMPF)
-            setState(pstate, rCS, LH(prog.Image + pIcode->ic.ll.label + 3));
-        i = pstate->IP = pIcode->ic.ll.immed.op;
+    if (pIcode->ll.flg & I) {
+        if (pIcode->ll.opcode == iJMPF)
+            setState(pstate, rCS, LH(prog.Image + pIcode->ll.label + 3));
+        i = pstate->IP = pIcode->ll.immed.op;
 
         // Return TRUE if jump target is already parsed
         return labelSrch(pProc->Icode.icode, pProc->Icode.numIcode, i, &tmp);
@@ -397,15 +397,15 @@ static bool process_JMP(PICODE pIcode, PPROC pProc, PSTATE pstate, PCALL_GRAPH p
 
     /* We've got an indirect JMP - look for switch() stmt.
        idiom of the form JMP  word ptr  word_offset[rBX | rSI | rDI] */
-    uint32_t seg = (pIcode->ic.ll.src.seg) ? pIcode->ic.ll.src.seg : rDS;
+    uint32_t seg = (pIcode->ll.src.seg) ? pIcode->ll.src.seg : rDS;
 
     // Ensure we have a word offset & valid seg
-    if (pIcode->ic.ll.opcode == iJMP && (pIcode->ic.ll.flg & WORD_OFF) && pstate->f[seg] &&
-        (pIcode->ic.ll.src.regi == INDEXBASE + 4 ||
-         pIcode->ic.ll.src.regi == INDEXBASE + 5 || // Idx reg. BX, SI, DI
-         pIcode->ic.ll.src.regi == INDEXBASE + 7)) {
+    if (pIcode->ll.opcode == iJMP && (pIcode->ll.flg & WORD_OFF) && pstate->f[seg] &&
+        (pIcode->ll.src.regi == INDEXBASE + 4 ||
+         pIcode->ll.src.regi == INDEXBASE + 5 || // Idx reg. BX, SI, DI
+         pIcode->ll.src.regi == INDEXBASE + 7)) {
 
-        offTable = (pstate->r[seg] << 4) + pIcode->ic.ll.src.off;
+        offTable = (pstate->r[seg] << 4) + pIcode->ll.src.off;
 
         /* Firstly look for a leading range check of the form:
            CMP {BX | SI | DI}, immed
@@ -413,7 +413,7 @@ static bool process_JMP(PICODE pIcode, PPROC pProc, PSTATE pstate, PCALL_GRAPH p
            This is stored in the current state as if we had just
            followed a JBE branch (i.e. [reg] lies between 0 - immed). */
 
-        if (pstate->JCond.regi == i2r[pIcode->ic.ll.src.regi - (INDEXBASE + 4)])
+        if (pstate->JCond.regi == i2r[pIcode->ll.src.regi - (INDEXBASE + 4)])
             endTable = offTable + pstate->JCond.immed;
         else
             endTable = prog.cbImage;
@@ -451,10 +451,10 @@ static bool process_JMP(PICODE pIcode, PPROC pProc, PSTATE pstate, PCALL_GRAPH p
 
             setBits(BM_DATA, offTable, endTable - offTable);
 
-            pIcode->ic.ll.flg |= SWITCH;
-            pIcode->ic.ll.caseTbl.numEntries = (endTable - offTable) / 2;
-            uint32_t *psw = allocMem(pIcode->ic.ll.caseTbl.numEntries * sizeof(uint32_t));
-            pIcode->ic.ll.caseTbl.entries = psw;
+            pIcode->ll.flg |= SWITCH;
+            pIcode->ll.caseTbl.numEntries = (endTable - offTable) / 2;
+            uint32_t *psw = allocMem(pIcode->ll.caseTbl.numEntries * sizeof(uint32_t));
+            pIcode->ll.caseTbl.entries = psw;
 
             for (i = offTable, k = 0; i < endTable; i += 2) {
                 memcpy(&StCopy, pstate, sizeof(STATE));
@@ -463,9 +463,9 @@ static bool process_JMP(PICODE pIcode, PPROC pProc, PSTATE pstate, PCALL_GRAPH p
 
                 FollowCtrl(pProc, pcallGraph, &StCopy);
 
-                pProc->Icode.icode[ip].ic.ll.caseTbl.numEntries = k++;
-                pProc->Icode.icode[ip].ic.ll.flg |= CASE;
-                *psw++ = pProc->Icode.icode[ip].ic.ll.label;
+                pProc->Icode.icode[ip].ll.caseTbl.numEntries = k++;
+                pProc->Icode.icode[ip].ll.flg |= CASE;
+                *psw++ = pProc->Icode.icode[ip].ll.label;
             }
             return true;
         }
@@ -497,24 +497,24 @@ static bool process_CALL(PICODE pIcode, PPROC pProc, PCALL_GRAPH pcallGraph, PST
     // For Indirect Calls, find the function address
     bool indirect = false;
 
-    if (!(pIcode->ic.ll.flg & I)) {
+    if (!(pIcode->ll.flg & I)) {
         // Offset into program image is seg:off of read input
-        off = pIcode->ic.ll.dst.off + (pIcode->ic.ll.dst.segValue << 4);
+        off = pIcode->ll.dst.off + (pIcode->ll.dst.segValue << 4);
 
         /* Address of function is given by 4 (CALLF) or 2 (CALL) bytes at
            previous offset into the program image */
-        if (pIcode->ic.ll.opcode == iCALLF)
-            pIcode->ic.ll.immed.op = LH(&prog.Image[off]) + (LH(&prog.Image[off + 2]) << 4);
+        if (pIcode->ll.opcode == iCALLF)
+            pIcode->ll.immed.op = LH(&prog.Image[off]) + (LH(&prog.Image[off + 2]) << 4);
         else
-            pIcode->ic.ll.immed.op = LH(&prog.Image[off]) + (pProc->state.r[rCS] << 4);
-        pIcode->ic.ll.flg |= I;
+            pIcode->ll.immed.op = LH(&prog.Image[off]) + (pProc->state.r[rCS] << 4);
+        pIcode->ll.flg |= I;
         indirect = true;
     }
 
-    // Process CALL. Function address is located in pIcode->ic.ll.immed.op
-    if (pIcode->ic.ll.flg & I) {
+    // Process CALL. Function address is located in pIcode->ll.immed.op
+    if (pIcode->ll.flg & I) {
         // Search procedure list for one with appropriate entry point
-        for (p = pProcList; p && p->procEntry != pIcode->ic.ll.immed.op; p = p->next)
+        for (p = pProcList; p && p->procEntry != pIcode->ll.immed.op; p = p->next)
             pPrev = p;
 
         // Create a new procedure node and save copy of the state
@@ -522,7 +522,7 @@ static bool process_CALL(PICODE pIcode, PPROC pProc, PCALL_GRAPH pcallGraph, PST
             p = memset(allocStruc(PROC), 0, sizeof(PROC));
             pPrev->next = p;
             p->prev = pPrev;
-            p->procEntry = pIcode->ic.ll.immed.op;
+            p->procEntry = pIcode->ll.immed.op;
             pLastProc = p; // Pointer to last node in the list
 
             LibCheck(p);
@@ -530,7 +530,7 @@ static bool process_CALL(PICODE pIcode, PPROC pProc, PCALL_GRAPH pcallGraph, PST
             if (p->flg & PROC_ISLIB) {
                 // A library function. No need to do any more to it
                 insertCallGraph(pcallGraph, pProc, p);
-                pProc->Icode.icode[ip].ic.ll.immed.proc.proc = p;
+                pProc->Icode.icode[ip].ll.immed.proc.proc = p;
                 return false;
             }
 
@@ -546,10 +546,10 @@ static bool process_CALL(PICODE pIcode, PPROC pProc, PCALL_GRAPH pcallGraph, PST
 
             // Save machine state in localState, load up IP and CS.
             memcpy(&localState, pstate, sizeof(STATE));
-            pstate->IP = pIcode->ic.ll.immed.op;
+            pstate->IP = pIcode->ll.immed.op;
 
-            if (pIcode->ic.ll.opcode == iCALLF)
-                setState(pstate, rCS, LH(prog.Image + pIcode->ic.ll.label + 3));
+            if (pIcode->ll.opcode == iCALLF)
+                setState(pstate, rCS, LH(prog.Image + pIcode->ll.label + 3));
 
             memcpy(&(p->state), pstate, sizeof(STATE));
 
@@ -569,7 +569,7 @@ static bool process_CALL(PICODE pIcode, PPROC pProc, PCALL_GRAPH pcallGraph, PST
         } else
             insertCallGraph(pcallGraph, pProc, p);
 
-        pProc->Icode.icode[ip].ic.ll.immed.proc.proc = p; // ^ target proc
+        pProc->Icode.icode[ip].ll.immed.proc.proc = p; // ^ target proc
 
         return false;
     }
@@ -580,14 +580,14 @@ static bool process_CALL(PICODE pIcode, PPROC pProc, PCALL_GRAPH pcallGraph, PST
 static void process_MOV(PICODE pIcode, PSTATE pstate)
 {
     PSYM psym, psym2; // Pointer to symbol in global symbol table
-    uint8_t dstReg = pIcode->ic.ll.dst.regi;
-    uint8_t srcReg = pIcode->ic.ll.src.regi;
+    uint8_t dstReg = pIcode->ll.dst.regi;
+    uint8_t srcReg = pIcode->ll.src.regi;
 
     if (dstReg > 0 && dstReg < INDEXBASE) {
-        if (pIcode->ic.ll.flg & I)
-            setState(pstate, dstReg, (int16_t)pIcode->ic.ll.immed.op);
+        if (pIcode->ll.flg & I)
+            setState(pstate, dstReg, (int16_t)pIcode->ll.immed.op);
         else if (srcReg == 0) { // direct memory offset
-            psym = lookupAddr(&pIcode->ic.ll.src, pstate, 2, USE);
+            psym = lookupAddr(&pIcode->ll.src, pstate, 2, USE);
             if (psym && ((psym->flg & SEG_IMMED) || (psym->duVal & VAL)))
                 setState(pstate, dstReg, LH(&prog.Image[psym->label]));
         } else if (srcReg < INDEXBASE && pstate->f[srcReg]) { // reg
@@ -598,14 +598,14 @@ static void process_MOV(PICODE pIcode, PSTATE pstate)
                 pstate->JCond.regi = dstReg;
         }
     } else if (dstReg == 0) { // direct memory offset
-        psym = lookupAddr(&pIcode->ic.ll.dst, pstate, 2, DEF);
+        psym = lookupAddr(&pIcode->ll.dst, pstate, 2, DEF);
         if (psym && !(psym->duVal & VAL)) { // no initial value yet
-            if (pIcode->ic.ll.flg & I) {  // immediate
-                prog.Image[psym->label] = (uint8_t)pIcode->ic.ll.immed.op;
-                prog.Image[psym->label + 1] = (uint8_t)(pIcode->ic.ll.immed.op >> 8);
+            if (pIcode->ll.flg & I) {  // immediate
+                prog.Image[psym->label] = (uint8_t)pIcode->ll.immed.op;
+                prog.Image[psym->label + 1] = (uint8_t)(pIcode->ll.immed.op >> 8);
                 psym->duVal |= VAL;
             } else if (srcReg == 0) { // direct mem offset
-                psym2 = lookupAddr(&pIcode->ic.ll.src, pstate, 2, USE);
+                psym2 = lookupAddr(&pIcode->ll.src, pstate, 2, USE);
                 if (psym2 && ((psym->flg & SEG_IMMED) || (psym->duVal & VAL))) {
                     prog.Image[psym->label] = (uint8_t)prog.Image[psym2->label];
                     prog.Image[psym->label + 1] = (uint8_t)(prog.Image[psym2->label + 1] >> 8);
@@ -799,7 +799,7 @@ void setState(PSTATE pstate, uint16_t reg, int16_t value)
 bool labelSrch(PICODE pIcode, int numIp, uint32_t target, int *pIndex)
 {
     for (int i = 0; i < numIp; i++) {
-        if (pIcode[i].ic.ll.label == target) {
+        if (pIcode[i].ll.label == target) {
             *pIndex = i;
             return true;
         }
@@ -842,7 +842,7 @@ uint32_t duReg[] = {
 */
 static void use(opLoc d, PICODE pIcode, PPROC pProc, PSTATE pstate, int size, int ix)
 {
-    PMEM pm = (d == SRC) ? &pIcode->ic.ll.src : &pIcode->ic.ll.dst;
+    PMEM pm = (d == SRC) ? &pIcode->ll.src : &pIcode->ll.dst;
     PSYM psym;
 
     if (pm->regi == 0 || pm->regi >= INDEXBASE) {
@@ -865,12 +865,12 @@ static void use(opLoc d, PICODE pIcode, PPROC pProc, PSTATE pstate, int size, in
         }
         else if ((psym = lookupAddr(pm, pstate, size, USE))) {
             setBits(BM_DATA, psym->label, (uint32_t)size);
-            pIcode->ic.ll.flg |= SYM_USE;
-            pIcode->ic.ll.caseTbl.numEntries = psym - symtab.sym;
+            pIcode->ll.flg |= SYM_USE;
+            pIcode->ll.caseTbl.numEntries = psym - symtab.sym;
         }
     }
     // Use of register
-    else if ((d == DST) || ((d == SRC) && (pIcode->ic.ll.flg & I) != I))
+    else if ((d == DST) || ((d == SRC) && (pIcode->ll.flg & I) != I))
         pIcode->du.use |= duReg[pm->regi];
 }
 
@@ -880,7 +880,7 @@ static void use(opLoc d, PICODE pIcode, PPROC pProc, PSTATE pstate, int size, in
 */
 static void def(opLoc d, PICODE pIcode, PPROC pProc, PSTATE pstate, int size, int ix)
 {
-    PMEM pm = (d == SRC) ? &pIcode->ic.ll.src : &pIcode->ic.ll.dst;
+    PMEM pm = (d == SRC) ? &pIcode->ll.src : &pIcode->ll.dst;
     PSYM psym;
 
     if (pm->regi == 0 || pm->regi >= INDEXBASE) {
@@ -903,12 +903,12 @@ static void def(opLoc d, PICODE pIcode, PPROC pProc, PSTATE pstate, int size, in
         }
         else if ((psym = lookupAddr(pm, pstate, size, DEF))) {
             setBits(BM_DATA, psym->label, (uint32_t)size);
-            pIcode->ic.ll.flg |= SYM_DEF;
-            pIcode->ic.ll.caseTbl.numEntries = psym - symtab.sym;
+            pIcode->ll.flg |= SYM_DEF;
+            pIcode->ll.caseTbl.numEntries = psym - symtab.sym;
         }
     }
     // Definition of register
-    else if ((d == DST) || ((d == SRC) && (pIcode->ic.ll.flg & I) != I)) {
+    else if ((d == DST) || ((d == SRC) && (pIcode->ll.flg & I) != I)) {
         pIcode->du.def |= duReg[pm->regi];
         pIcode->du1.numRegsDef++;
     }
@@ -920,7 +920,7 @@ static void def(opLoc d, PICODE pIcode, PPROC pProc, PSTATE pstate, int size, in
 */
 static void use_def(opLoc d, PICODE pIcode, PPROC pProc, PSTATE pstate, int cb, int ix)
 {
-    PMEM pm = (d == SRC) ? &pIcode->ic.ll.src : &pIcode->ic.ll.dst;
+    PMEM pm = (d == SRC) ? &pIcode->ll.src : &pIcode->ll.dst;
 
     use(d, pIcode, pProc, pstate, cb, ix);
 
@@ -933,11 +933,11 @@ static void use_def(opLoc d, PICODE pIcode, PPROC pProc, PSTATE pstate, int cb, 
 // Set DU vector, local variables and arguments, and DATA bits in the bitmap
 static void process_operands(PICODE pIcode, PPROC pProc, PSTATE pstate, int ix)
 {
-    int sseg = (pIcode->ic.ll.src.seg) ? pIcode->ic.ll.src.seg : rDS;
-    int cb = (pIcode->ic.ll.flg & B) ? 1 : 2;
-    uint32_t Imm = (pIcode->ic.ll.flg & I);
+    int sseg = (pIcode->ll.src.seg) ? pIcode->ll.src.seg : rDS;
+    int cb = (pIcode->ll.flg & B) ? 1 : 2;
+    uint32_t Imm = (pIcode->ll.flg & I);
 
-    switch (pIcode->ic.ll.opcode) {
+    switch (pIcode->ll.opcode) {
     default:
             break;
     case iAND:
@@ -1008,7 +1008,7 @@ static void process_operands(PICODE pIcode, PPROC pProc, PSTATE pstate, int ix)
         break;
 
     case iSIGNEX:
-        cb = (pIcode->ic.ll.flg & SRC_B) ? 1 : 2;
+        cb = (pIcode->ll.flg & SRC_B) ? 1 : 2;
         if (cb == 1) { // byte
             pIcode->du.def |= duReg[rAX];
             pIcode->du1.numRegsDef++;
@@ -1026,7 +1026,7 @@ static void process_operands(PICODE pIcode, PPROC pProc, PSTATE pstate, int ix)
     case iPUSH:
     case iPOP:
         if (!Imm) {
-            if (pIcode->ic.ll.opcode == iPOP)
+            if (pIcode->ll.opcode == iPOP)
                 def(DST, pIcode, pProc, pstate, cb, ix);
             else
                 use(DST, pIcode, pProc, pstate, cb, ix);
@@ -1039,7 +1039,7 @@ static void process_operands(PICODE pIcode, PPROC pProc, PSTATE pstate, int ix)
 
     case iLDS:
     case iLES:
-        pIcode->du.def |= duReg[(pIcode->ic.ll.opcode == iLDS) ? rDS : rES];
+        pIcode->du.def |= duReg[(pIcode->ll.opcode == iLDS) ? rDS : rES];
         pIcode->du1.numRegsDef++;
         cb = 4;
     case iMOV:
@@ -1098,7 +1098,7 @@ static void process_operands(PICODE pIcode, PPROC pProc, PSTATE pstate, int ix)
     case iINS:
         pIcode->du.def |= duReg[rDI];
         pIcode->du1.numRegsDef++;
-        if (pIcode->ic.ll.opcode == iREP_INS || pIcode->ic.ll.opcode == iINS) {
+        if (pIcode->ll.opcode == iREP_INS || pIcode->ll.opcode == iINS) {
             pIcode->du.use |= duReg[rDI] | duReg[rES] | duReg[rDX];
         } else {
             pIcode->du.use |= duReg[rDI] | duReg[rES] | duReg[(cb == 2) ? rAX : rAL];
@@ -1135,6 +1135,6 @@ static void process_operands(PICODE pIcode, PPROC pProc, PSTATE pstate, int ix)
     }
 
     for (int i = rSP; i <= rBH; i++) // Kill all defined registers
-        if (pIcode->ic.ll.flagDU.d & (1 << i))
+        if (pIcode->ll.flagDU.d & (1 << i))
             pstate->f[i] = false;
 }

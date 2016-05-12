@@ -270,13 +270,13 @@ COND_EXPR *idCondExpLong(LOCAL_ID *localId, opLoc sd, PICODE pIcode, hlFirst f, 
     COND_EXPR *new = newCondExp(IDENTIFIER);
 
     // Check for long constant and save it as a constant expression
-    if ((sd == SRC) && ((pIcode->ic.ll.flg & I) == I)) { // constant
+    if ((sd == SRC) && ((pIcode->ll.flg & I) == I)) { // constant
         new->expr.ident.idType = CONST;
 
         if (f == HIGH_FIRST)
-            new->expr.ident.idNode.kte.kte = (pIcode->ic.ll.immed.op << 16) + (pIcode + off)->ic.ll.immed.op;
+            new->expr.ident.idNode.kte.kte = (pIcode->ll.immed.op << 16) + (pIcode + off)->ll.immed.op;
         else // LOW_FIRST
-            new->expr.ident.idNode.kte.kte = ((pIcode + off)->ic.ll.immed.op << 16) + pIcode->ic.ll.immed.op;
+            new->expr.ident.idNode.kte.kte = ((pIcode + off)->ll.immed.op << 16) + pIcode->ll.immed.op;
 
         new->expr.ident.idNode.kte.size = 4;
     }
@@ -346,10 +346,10 @@ COND_EXPR *idCondExp(PICODE pIcode, opLoc sd, PPROC pProc, int i, PICODE duIcode
     COND_EXPR *new = NULL;
     int idx; // idx into pIcode->localId table
 
-    PMEM pm = (sd == SRC) ? &pIcode->ic.ll.src : &pIcode->ic.ll.dst;
+    PMEM pm = (sd == SRC) ? &pIcode->ll.src : &pIcode->ll.dst;
 
-    if (((sd == DST) && (pIcode->ic.ll.flg & IM_DST) == IM_DST) ||
-        ((sd == SRC) && (pIcode->ic.ll.flg & IM_SRC)) || (sd == LHS_OP)) // for MUL lhs
+    if (((sd == DST) && (pIcode->ll.flg & IM_DST) == IM_DST) ||
+        ((sd == SRC) && (pIcode->ll.flg & IM_SRC)) || (sd == LHS_OP)) // for MUL lhs
     {                                                                    // implicit dx:ax
         idx = newLongRegId(&pProc->localId, TYPE_LONG_SIGN, rDX, rAX, i);
         new = idCondExpLongIdx(idx);
@@ -357,19 +357,19 @@ COND_EXPR *idCondExp(PICODE pIcode, opLoc sd, PPROC pProc, int i, PICODE duIcode
         setRegDU(duIcode, rAX, du);
     }
 
-    else if ((sd == DST) && (pIcode->ic.ll.flg & IM_TMP_DST) == IM_TMP_DST) { // implicit tmp
+    else if ((sd == DST) && (pIcode->ll.flg & IM_TMP_DST) == IM_TMP_DST) { // implicit tmp
         new = idCondExpReg(rTMP, 0, &pProc->localId);
         setRegDU(duIcode, rTMP, USE);
     }
 
-    else if ((sd == SRC) && ((pIcode->ic.ll.flg & I) == I)) // constant
-        new = idCondExpKte(pIcode->ic.ll.immed.op, 2);
+    else if ((sd == SRC) && ((pIcode->ll.flg & I) == I)) // constant
+        new = idCondExpKte(pIcode->ll.immed.op, 2);
 
     else if (pm->regi == 0) // global variable
         new = idCondExpGlob(pm->segValue, pm->off);
 
     else if (pm->regi < INDEXBASE) { // register
-        uint32_t flag = (sd == SRC) ? pIcode->ic.ll.flg : pIcode->ic.ll.flg & NO_SRC_B;
+        uint32_t flag = (sd == SRC) ? pIcode->ll.flg : pIcode->ll.flg & NO_SRC_B;
         new = idCondExpReg(pm->regi, flag, &pProc->localId);
         setRegDU(duIcode, pm->regi, du);
     }
@@ -423,9 +423,9 @@ COND_EXPR *idCondExp(PICODE pIcode, opLoc sd, PPROC pProc, int i, PICODE duIcode
 // Returns the identifier type
 condId idType(PICODE pIcode, opLoc sd)
 {
-    PMEM pm = (sd == SRC) ? &pIcode->ic.ll.src : &pIcode->ic.ll.dst;
+    PMEM pm = (sd == SRC) ? &pIcode->ll.src : &pIcode->ll.dst;
 
-    if ((sd == SRC) && ((pIcode->ic.ll.flg & I) == I))
+    if ((sd == SRC) && ((pIcode->ll.flg & I) == I))
         return CONST;
     else if (pm->regi == 0)
         return GLOB_VAR;

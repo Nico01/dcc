@@ -185,14 +185,14 @@ static void findNodesInLoop(PBB latchNode, PBB head, PPROC pProc, queue *intNode
                     head->loopFollow = latchNode->edges[ELSE].BBptr->dfsLastNum;
                 else
                     head->loopFollow = latchNode->edges[THEN].BBptr->dfsLastNum;
-                pProc->Icode.icode[latchNode->start + latchNode->length - 1].ic.ll.flg |= JX_LOOP;
+                pProc->Icode.icode[latchNode->start + latchNode->length - 1].ll.flg |= JX_LOOP;
             } else {
                 head->loopType = WHILE_TYPE;
                 if (inList(loopNodes, head->edges[THEN].BBptr->dfsLastNum))
                     head->loopFollow = head->edges[ELSE].BBptr->dfsLastNum;
                 else
                     head->loopFollow = head->edges[THEN].BBptr->dfsLastNum;
-                pProc->Icode.icode[head->start + head->length - 1].ic.ll.flg |= JX_LOOP;
+                pProc->Icode.icode[head->start + head->length - 1].ll.flg |= JX_LOOP;
             }
         else { // head = anything besides 2-way, latch = 2-way
             head->loopType = REPEAT_TYPE;
@@ -200,7 +200,7 @@ static void findNodesInLoop(PBB latchNode, PBB head, PPROC pProc, queue *intNode
                 head->loopFollow = latchNode->edges[ELSE].BBptr->dfsLastNum;
             else
                 head->loopFollow = latchNode->edges[THEN].BBptr->dfsLastNum;
-            pProc->Icode.icode[latchNode->start + latchNode->length - 1].ic.ll.flg |= JX_LOOP;
+            pProc->Icode.icode[latchNode->start + latchNode->length - 1].ll.flg |= JX_LOOP;
         }
     else // latch = 1-way
         if (latchNode->nodeType == LOOP_NODE) {
@@ -232,7 +232,7 @@ static void findNodesInLoop(PBB latchNode, PBB head, PPROC pProc, queue *intNode
         }
         if (pbb->dfsLastNum > head->dfsLastNum)
             pProc->dfsLast[head->loopFollow]->loopHead = NO_NODE;
-        pProc->Icode.icode[head->start + head->length - 1].ic.ll.flg |= JX_LOOP;
+        pProc->Icode.icode[head->start + head->length - 1].ll.flg |= JX_LOOP;
     } else {
         head->loopType = ENDLESS_TYPE;
         // missing follow
@@ -417,7 +417,7 @@ static void structIfs(PPROC pProc)
             continue;
 
         if ((currNode->nodeType == TWO_BRANCH) &&
-            (!(pProc->Icode.icode[currNode->start + currNode->length - 1].ic.ll.flg & JX_LOOP))) {
+            (!(pProc->Icode.icode[currNode->start + currNode->length - 1].ll.flg & JX_LOOP))) {
             followInEdges = 0;
             follow = 0;
 
@@ -479,8 +479,8 @@ void compoundCond(PPROC pproc)
                     // Construct compound DBL_OR expression
                     picode = &pproc->Icode.icode[pbb->start + pbb->length - 1];
                     ticode = &pproc->Icode.icode[t->start + t->length - 1];
-                    exp = boolCondExp(picode->ic.hl.oper.exp, ticode->ic.hl.oper.exp, DBL_OR);
-                    picode->ic.hl.oper.exp = exp;
+                    exp = boolCondExp(picode->hl.oper.exp, ticode->hl.oper.exp, DBL_OR);
+                    picode->hl.oper.exp = exp;
 
                     // Replace in-edge to obb from t to pbb
                     for (j = 0; j < obb->numInEdges; j++)
@@ -521,9 +521,9 @@ void compoundCond(PPROC pproc)
                     // Construct compound DBL_AND expression
                     picode = &pproc->Icode.icode[pbb->start + pbb->length - 1];
                     ticode = &pproc->Icode.icode[t->start + t->length - 1];
-                    inverseCondOp(&picode->ic.hl.oper.exp);
-                    exp = boolCondExp(picode->ic.hl.oper.exp, ticode->ic.hl.oper.exp, DBL_AND);
-                    picode->ic.hl.oper.exp = exp;
+                    inverseCondOp(&picode->hl.oper.exp);
+                    exp = boolCondExp(picode->hl.oper.exp, ticode->hl.oper.exp, DBL_AND);
+                    picode->hl.oper.exp = exp;
 
                     // Replace in-edge to obb from t to pbb
                     for (j = 0; j < obb->numInEdges; j++)
@@ -565,8 +565,8 @@ void compoundCond(PPROC pproc)
                     // Construct compound DBL_AND expression
                     picode = &pproc->Icode.icode[pbb->start + pbb->length - 1];
                     ticode = &pproc->Icode.icode[t->start + t->length - 1];
-                    exp = boolCondExp(picode->ic.hl.oper.exp, ticode->ic.hl.oper.exp, DBL_AND);
-                    picode->ic.hl.oper.exp = exp;
+                    exp = boolCondExp(picode->hl.oper.exp, ticode->hl.oper.exp, DBL_AND);
+                    picode->hl.oper.exp = exp;
 
                     // Replace in-edge to obb from e to pbb
                     for (j = 0; j < obb->numInEdges; j++)
@@ -607,9 +607,9 @@ void compoundCond(PPROC pproc)
                     // Construct compound DBL_OR expression
                     picode = &pproc->Icode.icode[pbb->start + pbb->length - 1];
                     ticode = &pproc->Icode.icode[t->start + t->length - 1];
-                    inverseCondOp(&picode->ic.hl.oper.exp);
-                    exp = boolCondExp(picode->ic.hl.oper.exp, ticode->ic.hl.oper.exp, DBL_OR);
-                    picode->ic.hl.oper.exp = exp;
+                    inverseCondOp(&picode->hl.oper.exp);
+                    exp = boolCondExp(picode->hl.oper.exp, ticode->hl.oper.exp, DBL_OR);
+                    picode->hl.oper.exp = exp;
 
                     // Replace in-edge to obb from e to pbb
                     for (j = 0; j < obb->numInEdges; j++)

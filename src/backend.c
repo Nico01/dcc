@@ -104,15 +104,15 @@ static void writeBitVector(uint32_t regi)
 */
 static void emitGotoLabel(PICODE pt, int indLevel)
 {
-    if (!(pt->ic.ll.flg & HLL_LABEL)) { // node hasn't got a lab
+    if (!(pt->ll.flg & HLL_LABEL)) { // node hasn't got a lab
         // Generate new label
-        pt->ic.ll.hllLabNum = getNextLabel();
-        pt->ic.ll.flg |= HLL_LABEL;
+        pt->ll.hllLabNum = getNextLabel();
+        pt->ll.flg |= HLL_LABEL;
 
         // Node has been traversed already, so backpatch this label into the code
-        addLabelBundle(&cCode.code, pt->codeIdx, pt->ic.ll.hllLabNum);
+        addLabelBundle(&cCode.code, pt->codeIdx, pt->ll.hllLabNum);
     }
-    appendStrTab(&cCode.code, "%sgoto L%ld;\n", indent(indLevel), pt->ic.ll.hllLabNum);
+    appendStrTab(&cCode.code, "%sgoto L%ld;\n", indent(indLevel), pt->ll.hllLabNum);
 }
 
 /*
@@ -132,7 +132,7 @@ static void writeBB(PBB pBB, PICODE hli, int lev, PPROC pProc, int *numLoc)
     // Generate code for each hlicode that is not a JCOND
     for (int i = pBB->start, last = i + pBB->length; i < last; i++)
         if ((hli[i].type == HIGH_LEVEL) && (hli[i].invalid == false)) {
-            line = write1HlIcode(hli[i].ic.hl, pProc, numLoc);
+            line = write1HlIcode(hli[i].hl, pProc, numLoc);
             if (line[0] != '\0')
                 appendStrTab(&cCode.code, "%s%s", indent(lev), line);
             if (option.verbose)
@@ -182,7 +182,7 @@ static void writeCode(PBB pBB, int indLevel, PPROC pProc, int *numLoc, int latch
             picode = &pProc->Icode.icode[pBB->start + pBB->length - 1];
 
             // Check for error in while condition
-            if (picode->ic.hl.opcode != JCOND)
+            if (picode->hl.opcode != JCOND)
                 reportError(WHILE_FAIL);
 
             // Check if condition is more than 1 HL instruction
@@ -194,9 +194,9 @@ static void writeCode(PBB pBB, int indLevel, PPROC pProc, int *numLoc, int latch
             /* Condition needs to be inverted if the loop body is along
                the THEN path of the header node */
             if (pBB->edges[ELSE].BBptr->dfsLastNum == pBB->loopFollow)
-                inverseCondOp(&picode->ic.hl.oper.exp);
+                inverseCondOp(&picode->hl.oper.exp);
             appendStrTab(&cCode.code, "\n%swhile (%s) {\n", indent(indLevel),
-                         walkCondExpr(picode->ic.hl.oper.exp, pProc, numLoc));
+                         walkCondExpr(picode->hl.oper.exp, pProc, numLoc));
             invalidateIcode(picode);
             break;
 
@@ -250,10 +250,10 @@ static void writeCode(PBB pBB, int indLevel, PPROC pProc, int *numLoc, int latch
         else if (loopType == ENDLESS_TYPE)
             appendStrTab(&cCode.code, "%s} /* end of loop */\n", indent(indLevel));
         else if (loopType == REPEAT_TYPE) {
-            if (picode->ic.hl.opcode != JCOND)
+            if (picode->hl.opcode != JCOND)
                 reportError(REPEAT_FAIL);
             appendStrTab(&cCode.code, "%s} while (%s);\n", indent(indLevel),
-                         walkCondExpr(picode->ic.hl.oper.exp, pProc, numLoc));
+                         walkCondExpr(picode->hl.oper.exp, pProc, numLoc));
         }
 
         // Recurse on the loop follow
@@ -275,12 +275,12 @@ static void writeCode(PBB pBB, int indLevel, PPROC pProc, int *numLoc, int latch
                 succ = pBB->edges[THEN].BBptr;
                 if (succ->traversed != DFS_ALPHA) { // not visited
                     if (succ->dfsLastNum != follow) { // THEN part
-                        l = writeJcond(pProc->Icode.icode[pBB->start + pBB->length - 1].ic.hl,
+                        l = writeJcond(pProc->Icode.icode[pBB->start + pBB->length - 1].hl,
                                        pProc, numLoc);
                         appendStrTab(&cCode.code, "\n%s%s", indent(indLevel - 1), l);
                         writeCode(succ, indLevel, pProc, numLoc, latchNode, follow);
                     } else { // empty THEN part => negate ELSE part
-                        l = writeJcondInv(pProc->Icode.icode[pBB->start + pBB->length - 1].ic.hl,
+                        l = writeJcondInv(pProc->Icode.icode[pBB->start + pBB->length - 1].hl,
                                           pProc, numLoc);
                         appendStrTab(&cCode.code, "\n%s%s", indent(indLevel - 1), l);
                         writeCode(pBB->edges[ELSE].BBptr, indLevel, pProc, numLoc, latchNode,
@@ -311,7 +311,7 @@ static void writeCode(PBB pBB, int indLevel, PPROC pProc, int *numLoc, int latch
                 if (succ->traversed != DFS_ALPHA)
                     writeCode(succ, indLevel, pProc, numLoc, latchNode, ifFollow);
             } else { // no follow => if..then..else
-                l = writeJcond(pProc->Icode.icode[pBB->start + pBB->length - 1].ic.hl, pProc,
+                l = writeJcond(pProc->Icode.icode[pBB->start + pBB->length - 1].hl, pProc,
                                numLoc);
                 appendStrTab(&cCode.code, "\n%s%s", indent(indLevel - 1), l);
                 writeCode(pBB->edges[THEN].BBptr, indLevel, pProc, numLoc, latchNode, ifFollow);

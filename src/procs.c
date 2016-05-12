@@ -117,13 +117,13 @@ void newRegArg(PPROC pproc, PICODE picode, PICODE ticode)
     uint8_t regL, regH; // Registers involved in arguments
 
     // Flag ticode as having register arguments
-    tproc = ticode->ic.hl.oper.call.proc;
+    tproc = ticode->hl.oper.call.proc;
     tproc->flg |= REG_ARGS;
 
     // Get registers and index into target procedure's local list
-    ps = ticode->ic.hl.oper.call.args;
+    ps = ticode->hl.oper.call.args;
     ts = &tproc->args;
-    lhs = picode->ic.hl.oper.asgn.lhs;
+    lhs = picode->hl.oper.asgn.lhs;
     type = lhs->expr.ident.idType;
     if (type == REGISTER) {
         regL = pproc->localId.id[lhs->expr.ident.idNode.regiIdx].id.regi;
@@ -186,7 +186,7 @@ void newRegArg(PPROC pproc, PICODE picode, PICODE ticode)
         ps->sym = allocVar(ps->sym, ps->alloc * sizeof(STKSYM));
     }
     sprintf(ps->sym[ps->csym].name, "arg%d", ps->csym);
-    ps->sym[ps->csym].actual = picode->ic.hl.oper.asgn.rhs;
+    ps->sym[ps->csym].actual = picode->hl.oper.asgn.rhs;
     ps->sym[ps->csym].regs = lhs;
 
     // Mask off high and low register(s) in picode
@@ -218,7 +218,7 @@ void allocStkArgs(PICODE picode, int num)
 {
     PSTKFRAME ps;
 
-    ps = picode->ic.hl.oper.call.args;
+    ps = picode->hl.oper.call.args;
     ps->alloc = num;
     ps->csym = num;
     ps->numArgs = num;
@@ -252,7 +252,7 @@ bool newStkArg(PICODE picode, COND_EXPR *exp, llIcode opcode, PPROC pproc)
     }
 
     // Place register argument on the argument list
-    ps = picode->ic.hl.oper.call.args;
+    ps = picode->hl.oper.call.args;
     if (ps->csym == ps->alloc) {
         ps->alloc += 5;
         ps->sym = allocVar(ps->sym, ps->alloc * sizeof(STKSYM));
@@ -268,7 +268,7 @@ void placeStkArg(PICODE picode, COND_EXPR *exp, int pos)
 {
     PSTKFRAME ps;
 
-    ps = picode->ic.hl.oper.call.args;
+    ps = picode->hl.oper.call.args;
     ps->sym[pos].actual = exp;
     sprintf(ps->sym[pos].name, "arg%d", pos);
 }

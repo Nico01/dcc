@@ -54,14 +54,14 @@ PBB createCFG(PPROC pProc)
     for (ip = start = 0; ip < pProc->Icode.numIcode; ip++, pIcode++) {
         /* Stick a NOWHERE_NODE on the end if we terminate with anything
            other than a ret, jump or terminate */
-        if (ip + 1 == pProc->Icode.numIcode && !(pIcode->ic.ll.flg & TERMINATES) &&
-            pIcode->ic.ll.opcode != iJMP && pIcode->ic.ll.opcode != iJMPF &&
-            pIcode->ic.ll.opcode != iRET && pIcode->ic.ll.opcode != iRETF)
+        if (ip + 1 == pProc->Icode.numIcode && !(pIcode->ll.flg & TERMINATES) &&
+            pIcode->ll.opcode != iJMP && pIcode->ll.opcode != iJMPF &&
+            pIcode->ll.opcode != iRET && pIcode->ll.opcode != iRETF)
             newBB(pBB, start, ip, NOWHERE_NODE, 0, pProc);
 
         // Only process icodes that have valid instructions
-        else if ((pIcode->ic.ll.flg & NO_CODE) != NO_CODE) {
-            switch (pIcode->ic.ll.opcode) {
+        else if ((pIcode->ll.flg & NO_CODE) != NO_CODE) {
+            switch (pIcode->ll.opcode) {
             case iJB:
             case iJBE:
             case iJAE:
@@ -84,10 +84,10 @@ PBB createCFG(PPROC pProc)
                 start = ip + 1;
                 pBB->edges[0].ip = (uint32_t)start;
                 // This is for jumps off into nowhere
-                if (pIcode->ic.ll.flg & NO_LABEL)
+                if (pIcode->ll.flg & NO_LABEL)
                     pBB->numOutEdges--;
                 else
-                    pBB->edges[1].ip = pIcode->ic.ll.immed.op;
+                    pBB->edges[1].ip = pIcode->ll.immed.op;
                 break;
 
             case iLOOP:
@@ -98,15 +98,15 @@ PBB createCFG(PPROC pProc)
 
             case iJMPF:
             case iJMP:
-                if (pIcode->ic.ll.flg & SWITCH) {
-                    pBB = newBB(pBB, start, ip, MULTI_BRANCH, pIcode->ic.ll.caseTbl.numEntries,
+                if (pIcode->ll.flg & SWITCH) {
+                    pBB = newBB(pBB, start, ip, MULTI_BRANCH, pIcode->ll.caseTbl.numEntries,
                                 pProc);
-                    for (i = 0; i < pIcode->ic.ll.caseTbl.numEntries; i++)
-                        pBB->edges[i].ip = pIcode->ic.ll.caseTbl.entries[i];
+                    for (i = 0; i < pIcode->ll.caseTbl.numEntries; i++)
+                        pBB->edges[i].ip = pIcode->ll.caseTbl.entries[i];
                     pProc->hasCase = true;
-                } else if ((pIcode->ic.ll.flg & (I | NO_LABEL)) == I) {
+                } else if ((pIcode->ll.flg & (I | NO_LABEL)) == I) {
                     pBB = newBB(pBB, start, ip, ONE_BRANCH, 1, pProc);
-                    pBB->edges[0].ip = pIcode->ic.ll.immed.op;
+                    pBB->edges[0].ip = pIcode->ll.immed.op;
                 } else
                     newBB(pBB, start, ip, NOWHERE_NODE, 0, pProc);
                 start = ip + 1;
@@ -114,7 +114,7 @@ PBB createCFG(PPROC pProc)
 
             case iCALLF:
             case iCALL: {
-                PPROC p = pIcode->ic.ll.immed.proc.proc;
+                PPROC p = pIcode->ll.immed.proc.proc;
                 if (p)
                     i = ((p->flg) & TERMINATES) ? 0 : 1;
                 else
@@ -133,12 +133,12 @@ PBB createCFG(PPROC pProc)
 
             default:
                 // Check for exit to DOS
-                if (pIcode->ic.ll.flg & TERMINATES) {
+                if (pIcode->ll.flg & TERMINATES) {
                     pBB = newBB(pBB, start, ip, TERMINATE_NODE, 0, pProc);
                     start = ip + 1;
                 }
                 // Check for a fall through
-                else if (pProc->Icode.icode[ip + 1].ic.ll.flg & (TARGET | CASE)) {
+                else if (pProc->Icode.icode[ip + 1].ll.flg & (TARGET | CASE)) {
                     pBB = newBB(pBB, start, ip, FALL_NODE, 1, pProc);
                     start = ip + 1;
                     pBB->edges[0].ip = (uint32_t)start;
@@ -235,7 +235,7 @@ void compressCFG(PPROC pProc)
 
                 if (pBB->numOutEdges) { // Might have been clobbered
                     pBB->edges[i].BBptr = pNxt;
-                    pProc->Icode.icode[ip].ic.ll.immed.op = (uint32_t)pNxt->start;
+                    pProc->Icode.icode[ip].ll.immed.op = (uint32_t)pNxt->start;
                 }
             }
 
@@ -286,18 +286,18 @@ static PBB rmJMP(PPROC pProc, int marker, PBB pBB)
             if (--pBB->numInEdges)
                 pBB->edges[0].BBptr->numInEdges++;
             else {
-                pProc->Icode.icode[pBB->start].ic.ll.flg |= NO_CODE;
+                pProc->Icode.icode[pBB->start].ll.flg |= NO_CODE;
                 pProc->Icode.icode[pBB->start].invalid = true;
             }
 
             pBB = pBB->edges[0].BBptr;
         } else { // We are going around in circles
             pBB->nodeType = NOWHERE_NODE;
-            pProc->Icode.icode[pBB->start].ic.ll.immed.op = (uint32_t)pBB->start;
+            pProc->Icode.icode[pBB->start].ll.immed.op = (uint32_t)pBB->start;
             do {
                 pBB = pBB->edges[0].BBptr;
                 if (!--pBB->numInEdges) {
-                    pProc->Icode.icode[pBB->start].ic.ll.flg |= NO_CODE;
+                    pProc->Icode.icode[pBB->start].ll.flg |= NO_CODE;
                     pProc->Icode.icode[pBB->start].invalid = true;
                 }
             } while (pBB->nodeType != NOWHERE_NODE);
@@ -323,11 +323,11 @@ static void mergeFallThrough(PPROC pProc, PBB pBB)
             /* Jump to next instruction can always be removed */
             if (pBB->nodeType == ONE_BRANCH) {
                 ip = pBB->start + pBB->length;
-                for (i = ip; i < pChild->start && (pProc->Icode.icode[i].ic.ll.flg & NO_CODE); i++)
+                for (i = ip; i < pChild->start && (pProc->Icode.icode[i].ll.flg & NO_CODE); i++)
                     ;
                 if (i != pChild->start)
                     break;
-                pProc->Icode.icode[ip - 1].ic.ll.flg |= NO_CODE;
+                pProc->Icode.icode[ip - 1].ll.flg |= NO_CODE;
                 pProc->Icode.icode[ip - 1].invalid = true;
                 pBB->nodeType = FALL_NODE;
                 pBB->length--;
@@ -338,7 +338,7 @@ static void mergeFallThrough(PPROC pProc, PBB pBB)
 
             pBB->nodeType = pChild->nodeType;
             pBB->length = pChild->start + pChild->length - pBB->start;
-            pProc->Icode.icode[pChild->start].ic.ll.flg &= ~TARGET;
+            pProc->Icode.icode[pChild->start].ll.flg &= ~TARGET;
             pBB->numOutEdges = pChild->numOutEdges;
             free(pBB->edges);
             pBB->edges = pChild->edges;

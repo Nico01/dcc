@@ -283,11 +283,11 @@ int newLongId(LOCAL_ID *locSym, opLoc sd, PICODE pIcode, hlFirst f, int ix, oper
     PMEM pmH, pmL;
 
     if (f == LOW_FIRST) {
-        pmL = (sd == SRC) ? &pIcode->ic.ll.src : &pIcode->ic.ll.dst;
-        pmH = (sd == SRC) ? &(pIcode + off)->ic.ll.src : &(pIcode + off)->ic.ll.dst;
+        pmL = (sd == SRC) ? &pIcode->ll.src : &pIcode->ll.dst;
+        pmH = (sd == SRC) ? &(pIcode + off)->ll.src : &(pIcode + off)->ll.dst;
     } else { // HIGH_FIRST
-        pmH = (sd == SRC) ? &pIcode->ic.ll.src : &pIcode->ic.ll.dst;
-        pmL = (sd == SRC) ? &(pIcode + off)->ic.ll.src : &(pIcode + off)->ic.ll.dst;
+        pmH = (sd == SRC) ? &pIcode->ll.src : &pIcode->ll.dst;
+        pmL = (sd == SRC) ? &(pIcode + off)->ll.src : &(pIcode + off)->ll.dst;
     }
 
     if (pmL->regi == 0) // global variable
@@ -335,14 +335,14 @@ bool checkLongEq(struct _longStkId longId, PICODE pIcode, int i, int idx, PPROC 
 {
     PMEM pmHdst, pmLdst, pmHsrc, pmLsrc; // pointers to LOW_LEVEL icodes
 
-    pmHdst = &pIcode->ic.ll.dst;
-    pmLdst = &(pIcode + off)->ic.ll.dst;
-    pmHsrc = &pIcode->ic.ll.src;
-    pmLsrc = &(pIcode + off)->ic.ll.src;
+    pmHdst = &pIcode->ll.dst;
+    pmLdst = &(pIcode + off)->ll.dst;
+    pmHsrc = &pIcode->ll.src;
+    pmLsrc = &(pIcode + off)->ll.src;
 
     if ((longId.offH == pmHdst->off) && (longId.offL == pmLdst->off)) {
         *lhs = idCondExpLongIdx(i);
-        if ((pIcode->ic.ll.flg & NO_SRC) != NO_SRC)
+        if ((pIcode->ll.flg & NO_SRC) != NO_SRC)
             *rhs = idCondExpLong(&pProc->localId, SRC, pIcode, HIGH_FIRST, idx, USE, off);
         return true;
     } else if ((longId.offH == pmHsrc->off) && (longId.offL == pmLsrc->off)) {
@@ -371,14 +371,14 @@ bool checkLongRegEq(struct _longId longId, PICODE pIcode, int i, int idx, PPROC 
 {
     PMEM pmHdst, pmLdst, pmHsrc, pmLsrc; // pointers to LOW_LEVEL icodes
 
-    pmHdst = &pIcode->ic.ll.dst;
-    pmLdst = &(pIcode + off)->ic.ll.dst;
-    pmHsrc = &pIcode->ic.ll.src;
-    pmLsrc = &(pIcode + off)->ic.ll.src;
+    pmHdst = &pIcode->ll.dst;
+    pmLdst = &(pIcode + off)->ll.dst;
+    pmHsrc = &pIcode->ll.src;
+    pmLsrc = &(pIcode + off)->ll.src;
 
     if ((longId.h == pmHdst->regi) && (longId.l == pmLdst->regi)) {
         *lhs = idCondExpLongIdx(i);
-        if ((pIcode->ic.ll.flg & NO_SRC) != NO_SRC)
+        if ((pIcode->ll.flg & NO_SRC) != NO_SRC)
             *rhs = idCondExpLong(&pProc->localId, SRC, pIcode, HIGH_FIRST, idx, USE, off);
         return true;
     } else if ((longId.h == pmHsrc->regi) && (longId.l == pmLsrc->regi)) {

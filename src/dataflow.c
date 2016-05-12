@@ -29,11 +29,11 @@ static COND_EXPR *srcIdent(PICODE Icode, PPROC pProc, int i, PICODE duIcode, ope
 {
     COND_EXPR *n;
 
-    if (Icode->ic.ll.flg & I) { // immediate operand
-        if (Icode->ic.ll.flg & B)
-            n = idCondExpKte(Icode->ic.ll.immed.op, 1);
+    if (Icode->ll.flg & I) { // immediate operand
+        if (Icode->ll.flg & B)
+            n = idCondExpKte(Icode->ll.immed.op, 1);
         else
-            n = idCondExpKte(Icode->ic.ll.immed.op, 2);
+            n = idCondExpKte(Icode->ll.immed.op, 2);
     } else
         n = idCondExp(Icode, SRC, pProc, i, duIcode, du);
 
@@ -69,15 +69,15 @@ static void elimCondCodes(PPROC pProc)
         for (useAt = pBB->start + pBB->length; useAt != pBB->start; useAt--)
             if ((pProc->Icode.icode[useAt - 1].type == LOW_LEVEL) &&
                 (pProc->Icode.icode[useAt - 1].invalid == false) &&
-                (use = pProc->Icode.icode[useAt - 1].ic.ll.flagDU.u)) {
+                (use = pProc->Icode.icode[useAt - 1].ll.flagDU.u)) {
                 // Find definition within the same basic block
                 for (defAt = useAt - 1; defAt != pBB->start; defAt--) {
-                    def = pProc->Icode.icode[defAt - 1].ic.ll.flagDU.d;
+                    def = pProc->Icode.icode[defAt - 1].ll.flagDU.d;
                     if ((use & def) == use) {
                         notSup = false;
-                        if ((pProc->Icode.icode[useAt - 1].ic.ll.opcode >= iJB) &&
-                            (pProc->Icode.icode[useAt - 1].ic.ll.opcode <= iJNS)) {
-                            switch (pProc->Icode.icode[defAt - 1].ic.ll.opcode) {
+                        if ((pProc->Icode.icode[useAt - 1].ll.opcode >= iJB) &&
+                            (pProc->Icode.icode[useAt - 1].ll.opcode <= iJNS)) {
+                            switch (pProc->Icode.icode[defAt - 1].ll.opcode) {
                             case iCMP:
                                 rhs = srcIdent(&pProc->Icode.icode[defAt - 1], pProc, defAt - 1,
                                                &pProc->Icode.icode[useAt - 1], USE);
@@ -87,10 +87,10 @@ static void elimCondCodes(PPROC pProc)
 
                             case iOR:
                                 lhs =
-                                    copyCondExp(pProc->Icode.icode[defAt - 1].ic.hl.oper.asgn.lhs);
+                                    copyCondExp(pProc->Icode.icode[defAt - 1].hl.oper.asgn.lhs);
                                 copyDU(&pProc->Icode.icode[useAt - 1],
                                        &pProc->Icode.icode[defAt - 1], USE, DEF);
-                                if (pProc->Icode.icode[defAt - 1].ic.ll.flg & B)
+                                if (pProc->Icode.icode[defAt - 1].ll.flg & B)
                                     rhs = idCondExpKte(0, 1);
                                 else
                                     rhs = idCondExpKte(0, 2);
@@ -102,7 +102,7 @@ static void elimCondCodes(PPROC pProc)
                                 lhs = dstIdent(&pProc->Icode.icode[defAt - 1], pProc, defAt - 1,
                                                &pProc->Icode.icode[useAt - 1], USE);
                                 lhs = boolCondExp(lhs, rhs, AND);
-                                if (pProc->Icode.icode[defAt - 1].ic.ll.flg & B)
+                                if (pProc->Icode.icode[defAt - 1].ll.flg & B)
                                     rhs = idCondExpKte(0, 1);
                                 else
                                     rhs = idCondExpKte(0, 2);
@@ -110,18 +110,18 @@ static void elimCondCodes(PPROC pProc)
 
                             default:
                                 notSup = true;
-                                reportError(JX_NOT_DEF, pProc->Icode.icode[defAt - 1].ic.ll.opcode);
+                                reportError(JX_NOT_DEF, pProc->Icode.icode[defAt - 1].ll.opcode);
                                 pProc->flg |= PROC_ASM; // generate asm
                             }
                             if (!notSup) {
                                 exp = boolCondExp(
                                     lhs, rhs,
-                                    condOpJCond[pProc->Icode.icode[useAt - 1].ic.ll.opcode - iJB]);
+                                    condOpJCond[pProc->Icode.icode[useAt - 1].ll.opcode - iJB]);
                                 newJCondHlIcode(&pProc->Icode.icode[useAt - 1], exp);
                             }
                         }
 
-                        else if (pProc->Icode.icode[useAt - 1].ic.ll.opcode == iJCXZ) {
+                        else if (pProc->Icode.icode[useAt - 1].ll.opcode == iJCXZ) {
                             lhs = idCondExpReg(rCX, 0, &pProc->localId);
                             setRegDU(&pProc->Icode.icode[useAt - 1], rCX, USE);
                             rhs = idCondExpKte(0, 2);
@@ -130,8 +130,8 @@ static void elimCondCodes(PPROC pProc)
                         }
 
                         else {
-                            reportError(NOT_DEF_USE, pProc->Icode.icode[defAt - 1].ic.ll.opcode,
-                                        pProc->Icode.icode[useAt - 1].ic.ll.opcode);
+                            reportError(NOT_DEF_USE, pProc->Icode.icode[defAt - 1].ll.opcode,
+                                        pProc->Icode.icode[useAt - 1].ll.opcode);
                             pProc->flg |= PROC_ASM; // generate asm
                         }
                         break;
@@ -139,20 +139,20 @@ static void elimCondCodes(PPROC pProc)
                 }
 
                 // Check for extended basic block
-                if ((pBB->length == 1) && (pProc->Icode.icode[useAt - 1].ic.ll.opcode >= iJB) &&
-                    (pProc->Icode.icode[useAt - 1].ic.ll.opcode <= iJNS)) {
+                if ((pBB->length == 1) && (pProc->Icode.icode[useAt - 1].ll.opcode >= iJB) &&
+                    (pProc->Icode.icode[useAt - 1].ll.opcode <= iJNS)) {
                     prev = &pProc->Icode.icode[pBB->inEdges[0]->start + pBB->inEdges[0]->length - 1];
-                    if (prev->ic.hl.opcode == JCOND) {
-                        exp = copyCondExp(prev->ic.hl.oper.exp);
+                    if (prev->hl.opcode == JCOND) {
+                        exp = copyCondExp(prev->hl.oper.exp);
                         changeBoolCondExpOp(
-                            exp, condOpJCond[pProc->Icode.icode[useAt - 1].ic.ll.opcode - iJB]);
+                            exp, condOpJCond[pProc->Icode.icode[useAt - 1].ll.opcode - iJB]);
                         copyDU(&pProc->Icode.icode[useAt - 1], prev, USE, USE);
                         newJCondHlIcode(&pProc->Icode.icode[useAt - 1], exp);
                     }
                 }
                 // Error - definition not found for use of a cond code
                 else if (defAt == pBB->start)
-                    fatalError(DEF_NOT_FOUND, pProc->Icode.icode[useAt - 1].ic.ll.opcode);
+                    fatalError(DEF_NOT_FOUND, pProc->Icode.icode[useAt - 1].ll.opcode);
             }
     }
 }
@@ -228,8 +228,8 @@ static void liveRegAnalysis(PPROC pproc, uint32_t liveOut)
                 // Get return expression of function
                 if (pproc->flg & PROC_IS_FUNC) {
                     picode = &pproc->Icode.icode[pbb->start + pbb->length - 1];
-                    if (picode->ic.hl.opcode == RET) {
-                        picode->ic.hl.oper.exp = idCondExpID(&pproc->retVal, &pproc->localId,
+                    if (picode->hl.opcode == RET) {
+                        picode->hl.oper.exp = idCondExpID(&pproc->retVal, &pproc->localId,
                                                              pbb->start + pbb->length - 1);
                         picode->du.use = liveOut;
                     }
@@ -241,7 +241,7 @@ static void liveRegAnalysis(PPROC pproc, uint32_t liveOut)
                 // propagate to invoked procedure
                 if (pbb->nodeType == CALL_NODE) {
                     ticode = &pproc->Icode.icode[pbb->start + pbb->length - 1];
-                    pcallee = ticode->ic.hl.oper.call.proc;
+                    pcallee = ticode->hl.oper.call.proc;
 
                     // user/runtime routine
                     if (!(pcallee->flg & PROC_ISLIB)) {
@@ -368,8 +368,8 @@ static void genDU1(PPROC pProc)
                         /* Find target icode for CALL icodes to procedures that are functions.
                            The target icode is in the next basic block (unoptimized code) or
                            somewhere else on optimized code. */
-                        if ((picode->ic.hl.opcode == CALL) &&
-                            (picode->ic.hl.oper.call.proc->flg & PROC_IS_FUNC)) {
+                        if ((picode->hl.opcode == CALL) &&
+                            (picode->hl.oper.call.proc->flg & PROC_IS_FUNC)) {
                             tbb = pbb->edges[0].BBptr;
                             useIdx = 0;
                             for (int n = tbb->start; n < tbb->start + tbb->length; n++) {
@@ -397,8 +397,8 @@ static void genDU1(PPROC pProc)
                            which is normally not taken into account by the programmer). */
                         if ((picode->invalid == false) && (picode->du1.idx[defRegIdx][0] == 0) &&
                             (!(picode->du.lastDefRegi & duReg[regi])) &&
-                            (!((picode->ic.hl.opcode != CALL) &&
-                               (picode->ic.hl.oper.call.proc->flg & PROC_ISLIB)))) {
+                            (!((picode->hl.opcode != CALL) &&
+                               (picode->hl.oper.call.proc->flg & PROC_ISLIB)))) {
                             if (!(pbb->liveOut & duReg[regi])) { // not liveOut
                                 res = removeDefRegi(regi, picode, defRegIdx + 1, &pProc->localId);
 
@@ -441,14 +441,14 @@ static void forwardSubs(COND_EXPR *lhs, COND_EXPR *rhs, PICODE picode, PICODE ti
         return;
 
     // Insert on rhs of ticode, if possible
-    bool res = insertSubTreeReg(rhs, &ticode->ic.hl.oper.asgn.rhs,
+    bool res = insertSubTreeReg(rhs, &ticode->hl.oper.asgn.rhs,
                                 locsym->id[lhs->expr.ident.idNode.regiIdx].id.regi, locsym);
 
     if (res) {
         invalidateIcode(picode);
         (*numHlIcodes)--;
     } else { // Try to insert it on lhs of ticode
-        res = insertSubTreeReg(rhs, &ticode->ic.hl.oper.asgn.lhs,
+        res = insertSubTreeReg(rhs, &ticode->hl.oper.asgn.lhs,
                                locsym->id[lhs->expr.ident.idNode.regiIdx].id.regi, locsym);
         if (res) {
             invalidateIcode(picode);
@@ -464,13 +464,13 @@ static void forwardSubsLong(int longIdx, COND_EXPR *exp, PICODE picode, PICODE t
         return;
 
     // Insert on rhs of ticode, if possible
-    bool res = insertSubTreeLongReg(exp, &ticode->ic.hl.oper.asgn.rhs, longIdx);
+    bool res = insertSubTreeLongReg(exp, &ticode->hl.oper.asgn.rhs, longIdx);
 
     if (res) {
         invalidateIcode(picode);
         (*numHlIcodes)--;
     } else { // Try to insert it on lhs of ticode
-        res = insertSubTreeLongReg(exp, &ticode->ic.hl.oper.asgn.lhs, longIdx);
+        res = insertSubTreeLongReg(exp, &ticode->hl.oper.asgn.lhs, longIdx);
         if (res) {
             invalidateIcode(picode);
             (*numHlIcodes)--;
@@ -541,11 +541,11 @@ static void processCArg(PPROC pp, PPROC pProc, PICODE picode, int numArgs, int *
             } else
                 adjustActArgType(exp, pp->args.sym[numArgs].type, pProc);
         }
-        res = newStkArg(picode, exp, picode->ic.ll.opcode, pProc);
+        res = newStkArg(picode, exp, picode->ll.opcode, pProc);
     } else { // user function
         if (pp->args.numArgs > 0)
             adjustForArgType(&pp->args, numArgs, expType(exp, pProc));
-        res = newStkArg(picode, exp, picode->ic.ll.opcode, pProc);
+        res = newStkArg(picode, exp, picode->ll.opcode, pProc);
     }
 
     // Do not update the size of k if the expression was a segment register in a near call
@@ -598,27 +598,27 @@ static void findExps(PPROC pProc)
                         regi = picode->du1.regi[0];
 
                         // Check if we can forward substitute this register
-                        switch (picode->ic.hl.opcode) {
+                        switch (picode->hl.opcode) {
                         default: break;
                         case ASSIGN: // Replace rhs of current icode into target icode expression
                             ticode = &pProc->Icode.icode[picode->du1.idx[0][0]];
                             if ((picode->du.lastDefRegi & duReg[regi]) &&
-                                ((ticode->ic.hl.opcode != CALL) && (ticode->ic.hl.opcode != RET)))
+                                ((ticode->hl.opcode != CALL) && (ticode->hl.opcode != RET)))
                                 continue;
 
-                            if (xClear(picode->ic.hl.oper.asgn.rhs, j, picode->du1.idx[0][0],
+                            if (xClear(picode->hl.oper.asgn.rhs, j, picode->du1.idx[0][0],
                                        lastInst, pProc)) {
-                                switch (ticode->ic.hl.opcode) {
+                                switch (ticode->hl.opcode) {
                                 case ASSIGN:
-                                    forwardSubs(picode->ic.hl.oper.asgn.lhs, picode->ic.hl.oper.asgn.rhs,
+                                    forwardSubs(picode->hl.oper.asgn.lhs, picode->hl.oper.asgn.rhs,
                                                 picode, ticode, &pProc->localId, &numHlIcodes);
                                     break;
 
                                 case JCOND:
                                 case PUSH:
                                 case RET:
-                                    res = insertSubTreeReg(picode->ic.hl.oper.asgn.rhs, &ticode->ic.hl.oper.exp,
-                                    pProc->localId.id[picode->ic.hl.oper.asgn.lhs->expr.ident.idNode.regiIdx].id.regi, //TODO WTF?
+                                    res = insertSubTreeReg(picode->hl.oper.asgn.rhs, &ticode->hl.oper.exp,
+                                    pProc->localId.id[picode->hl.oper.asgn.lhs->expr.ident.idNode.regiIdx].id.regi, //TODO WTF?
                                                            &pProc->localId);
                                     if (res) {
                                         invalidateIcode(picode);
@@ -640,13 +640,13 @@ static void findExps(PPROC pProc)
                         case POP:
                             ticode = &pProc->Icode.icode[picode->du1.idx[0][0]];
                             if ((picode->du.lastDefRegi & duReg[regi]) &&
-                                ((ticode->ic.hl.opcode != CALL) && (ticode->ic.hl.opcode != RET)))
+                                ((ticode->hl.opcode != CALL) && (ticode->hl.opcode != RET)))
                                 continue;
 
                             exp = popExpStk(); // pop last exp pushed
-                            switch (ticode->ic.hl.opcode) {
+                            switch (ticode->hl.opcode) {
                             case ASSIGN:
-                                forwardSubs(picode->ic.hl.oper.exp, exp, picode, ticode,
+                                forwardSubs(picode->hl.oper.exp, exp, picode, ticode,
                                             &pProc->localId, &numHlIcodes);
                                 break;
 
@@ -654,9 +654,9 @@ static void findExps(PPROC pProc)
                             case PUSH:
                             case RET:
                                 res = insertSubTreeReg(
-                                    exp, &ticode->ic.hl.oper.exp,
+                                    exp, &ticode->hl.oper.exp,
                                     pProc->localId
-                                        .id[picode->ic.hl.oper.exp->expr.ident.idNode.regiIdx]
+                                        .id[picode->hl.oper.exp->expr.ident.idNode.regiIdx]
                                         .id.regi,
                                     &pProc->localId);
                                 if (res) {
@@ -671,17 +671,17 @@ static void findExps(PPROC pProc)
 
                         case CALL:
                             ticode = &pProc->Icode.icode[picode->du1.idx[0][0]];
-                            switch (ticode->ic.hl.opcode) {
+                            switch (ticode->hl.opcode) {
                             default: break;
                             case ASSIGN:
-                                exp = idCondExpFunc(picode->ic.hl.oper.call.proc,
-                                                    picode->ic.hl.oper.call.args);
-                                res = insertSubTreeReg(exp, &ticode->ic.hl.oper.asgn.rhs,
-                                                       picode->ic.hl.oper.call.proc->retVal.id.regi,
+                                exp = idCondExpFunc(picode->hl.oper.call.proc,
+                                                    picode->hl.oper.call.args);
+                                res = insertSubTreeReg(exp, &ticode->hl.oper.asgn.rhs,
+                                                       picode->hl.oper.call.proc->retVal.id.regi,
                                                        &pProc->localId);
                                 if (!res)
-                                    insertSubTreeReg(exp, &ticode->ic.hl.oper.asgn.lhs,
-                                                     picode->ic.hl.oper.call.proc->retVal.id.regi,
+                                    insertSubTreeReg(exp, &ticode->hl.oper.asgn.lhs,
+                                                     picode->hl.oper.call.proc->retVal.id.regi,
                                                      &pProc->localId);
                                 //  HERE missing: 2 regs TODO
                                 invalidateIcode(picode);
@@ -690,18 +690,18 @@ static void findExps(PPROC pProc)
 
                             case PUSH:
                             case RET:
-                                exp = idCondExpFunc(picode->ic.hl.oper.call.proc,
-                                                    picode->ic.hl.oper.call.args);
-                                ticode->ic.hl.oper.exp = exp;
+                                exp = idCondExpFunc(picode->hl.oper.call.proc,
+                                                    picode->hl.oper.call.args);
+                                ticode->hl.oper.exp = exp;
                                 invalidateIcode(picode);
                                 numHlIcodes--;
                                 break;
 
                             case JCOND:
-                                exp = idCondExpFunc(picode->ic.hl.oper.call.proc,
-                                                    picode->ic.hl.oper.call.args);
-                                retVal = &picode->ic.hl.oper.call.proc->retVal,
-                                res = insertSubTreeReg(exp, &ticode->ic.hl.oper.exp,
+                                exp = idCondExpFunc(picode->hl.oper.call.proc,
+                                                    picode->hl.oper.call.args);
+                                retVal = &picode->hl.oper.call.proc->retVal,
+                                res = insertSubTreeReg(exp, &ticode->hl.oper.exp,
                                                        retVal->id.regi, &pProc->localId);
                                 if (res) // was substituted
                                 {
@@ -723,31 +723,31 @@ static void findExps(PPROC pProc)
                     // Check for only one use of these registers
                     if ((picode->du1.idx[0][0] != 0) && (picode->du1.idx[0][1] == 0) &&
                         (picode->du1.idx[1][0] != 0) && (picode->du1.idx[1][1] == 0)) {
-                        switch (picode->ic.hl.opcode) {
+                        switch (picode->hl.opcode) {
                         default: break;
                         case ASSIGN:
                             // Replace rhs of current icode into target icode expression
                             if (picode->du1.idx[0][0] == picode->du1.idx[1][0]) {
                                 ticode = &pProc->Icode.icode[picode->du1.idx[0][0]];
                                 if ((picode->du.lastDefRegi & duReg[regi]) &&
-                                    ((ticode->ic.hl.opcode != CALL) &&
-                                     (ticode->ic.hl.opcode != RET)))
+                                    ((ticode->hl.opcode != CALL) &&
+                                     (ticode->hl.opcode != RET)))
                                     continue;
 
-                                switch (ticode->ic.hl.opcode) {
+                                switch (ticode->hl.opcode) {
                                 default: break;
                                 case ASSIGN:
                                     forwardSubsLong(
-                                        picode->ic.hl.oper.asgn.lhs->expr.ident.idNode.longIdx,
-                                        picode->ic.hl.oper.asgn.rhs, picode, ticode, &numHlIcodes);
+                                        picode->hl.oper.asgn.lhs->expr.ident.idNode.longIdx,
+                                        picode->hl.oper.asgn.rhs, picode, ticode, &numHlIcodes);
                                     break;
 
                                 case JCOND:
                                 case PUSH:
                                 case RET:
                                     res = insertSubTreeLongReg(
-                                        picode->ic.hl.oper.asgn.rhs, &ticode->ic.hl.oper.exp,
-                                        picode->ic.hl.oper.asgn.lhs->expr.ident.idNode.longIdx);
+                                        picode->hl.oper.asgn.rhs, &ticode->hl.oper.exp,
+                                        picode->hl.oper.asgn.lhs->expr.ident.idNode.longIdx);
                                     if (res) {
                                         invalidateIcode(picode);
                                         numHlIcodes--;
@@ -767,23 +767,23 @@ static void findExps(PPROC pProc)
                             if (picode->du1.idx[0][0] == picode->du1.idx[1][0]) {
                                 ticode = &pProc->Icode.icode[picode->du1.idx[0][0]];
                                 if ((picode->du.lastDefRegi & duReg[regi]) &&
-                                    ((ticode->ic.hl.opcode != CALL) &&
-                                     (ticode->ic.hl.opcode != RET)))
+                                    ((ticode->hl.opcode != CALL) &&
+                                     (ticode->hl.opcode != RET)))
                                     continue;
 
                                 exp = popExpStk(); // pop last exp pushed
-                                switch (ticode->ic.hl.opcode) {
+                                switch (ticode->hl.opcode) {
                                 default: break;
                                 case ASSIGN:
                                     forwardSubsLong(
-                                        picode->ic.hl.oper.exp->expr.ident.idNode.longIdx, exp,
+                                        picode->hl.oper.exp->expr.ident.idNode.longIdx, exp,
                                         picode, ticode, &numHlIcodes);
                                     break;
                                 case JCOND:
                                 case PUSH:
                                     res = insertSubTreeLongReg(
-                                        exp, &ticode->ic.hl.oper.exp,
-                                        picode->ic.hl.oper.asgn.lhs->expr.ident.idNode.longIdx);
+                                        exp, &ticode->hl.oper.exp,
+                                        picode->hl.oper.asgn.lhs->expr.ident.idNode.longIdx);
                                     if (res) {
                                         invalidateIcode(picode);
                                         numHlIcodes--;
@@ -797,33 +797,33 @@ static void findExps(PPROC pProc)
 
                         case CALL: // check for function return
                             ticode = &pProc->Icode.icode[picode->du1.idx[0][0]];
-                            switch (ticode->ic.hl.opcode) {
+                            switch (ticode->hl.opcode) {
                             default: break;
                             case ASSIGN:
-                                exp = idCondExpFunc(picode->ic.hl.oper.call.proc,
-                                                    picode->ic.hl.oper.call.args);
-                                ticode->ic.hl.oper.asgn.lhs = idCondExpLong(
+                                exp = idCondExpFunc(picode->hl.oper.call.proc,
+                                                    picode->hl.oper.call.args);
+                                ticode->hl.oper.asgn.lhs = idCondExpLong(
                                     &pProc->localId, DST, ticode, HIGH_FIRST, j, DEF, 1);
-                                ticode->ic.hl.oper.asgn.rhs = exp;
+                                ticode->hl.oper.asgn.rhs = exp;
                                 invalidateIcode(picode);
                                 numHlIcodes--;
                                 break;
 
                             case PUSH:
                             case RET:
-                                exp = idCondExpFunc(picode->ic.hl.oper.call.proc,
-                                                    picode->ic.hl.oper.call.args);
-                                ticode->ic.hl.oper.exp = exp;
+                                exp = idCondExpFunc(picode->hl.oper.call.proc,
+                                                    picode->hl.oper.call.args);
+                                ticode->hl.oper.exp = exp;
                                 invalidateIcode(picode);
                                 numHlIcodes--;
                                 break;
 
                             case JCOND:
-                                exp = idCondExpFunc(picode->ic.hl.oper.call.proc,
-                                                    picode->ic.hl.oper.call.args);
-                                retVal = &picode->ic.hl.oper.call.proc->retVal;
+                                exp = idCondExpFunc(picode->hl.oper.call.proc,
+                                                    picode->hl.oper.call.args);
+                                retVal = &picode->hl.oper.call.proc->retVal;
                                 res = insertSubTreeLongReg(
-                                    exp, &ticode->ic.hl.oper.exp,
+                                    exp, &ticode->hl.oper.exp,
                                     newLongRegId(&pProc->localId, retVal->type, retVal->id.longId.h,
                                                  retVal->id.longId.l, j));
                                 if (res) { // was substituted
@@ -841,20 +841,20 @@ static void findExps(PPROC pProc)
 
                 /* PUSH doesn't define any registers, only uses registers.
                    Push the associated expression to the register on the local expression stack */
-                else if (picode->ic.hl.opcode == PUSH) {
-                    pushExpStk(picode->ic.hl.oper.exp);
+                else if (picode->hl.opcode == PUSH) {
+                    pushExpStk(picode->hl.oper.exp);
                     invalidateIcode(picode);
                     numHlIcodes--;
                 }
 
                 /* For CALL instructions that use arguments from the stack, pop them from the
                    expression stack and place them on the procedure's argument list */
-                if ((picode->ic.hl.opcode == CALL) && !(picode->ic.hl.oper.call.proc->flg & REG_ARGS)) {
+                if ((picode->hl.opcode == CALL) && !(picode->hl.oper.call.proc->flg & REG_ARGS)) {
                     PPROC pp;
                     int cb, numArgs;
                     bool res;
 
-                    pp = picode->ic.hl.oper.call.proc;
+                    pp = picode->hl.oper.call.proc;
                     if (pp->flg & CALL_PASCAL) {
                         cb = pp->cbParam; // fixed # arguments
                         for (k = 0, numArgs = 0; k < cb; numArgs++) {
@@ -862,22 +862,22 @@ static void findExps(PPROC pProc)
                             if (pp->flg & PROC_ISLIB) { // library function
                                 if (pp->args.numArgs > 0)
                                     adjustActArgType(exp, pp->args.sym[numArgs].type, pProc);
-                                res = newStkArg(picode, exp, picode->ic.ll.opcode, pProc);
+                                res = newStkArg(picode, exp, picode->ll.opcode, pProc);
                             } else { // user function
                                 if (pp->args.numArgs > 0)
                                     adjustForArgType(&pp->args, numArgs, expType(exp, pProc));
-                                res = newStkArg(picode, exp, picode->ic.ll.opcode, pProc);
+                                res = newStkArg(picode, exp, picode->ll.opcode, pProc);
                             }
                             if (res == false)
                                 k += hlTypeSize(exp, pProc);
                         }
                     } else { // CALL_C
-                        cb = picode->ic.hl.oper.call.args->cb;
+                        cb = picode->hl.oper.call.args->cb;
                         numArgs = 0;
                         if (cb)
                             for (k = 0; k < cb; numArgs++)
                                 processCArg(pp, pProc, picode, numArgs, &k);
-                        else if ((cb == 0) && (picode->ic.ll.flg & REST_STK))
+                        else if ((cb == 0) && (picode->ll.flg & REST_STK))
                             while (!emptyExpStk()) {
                                 processCArg(pp, pProc, picode, numArgs, &k);
                                 numArgs++;
@@ -887,11 +887,11 @@ static void findExps(PPROC pProc)
 
                 /* If we could not substitute the result of a function,
                    assign it to the corresponding registers */
-                if ((picode->ic.hl.opcode == CALL) &&
-                    ((picode->ic.hl.oper.call.proc->flg & PROC_ISLIB) != PROC_ISLIB) &&
+                if ((picode->hl.opcode == CALL) &&
+                    ((picode->hl.oper.call.proc->flg & PROC_ISLIB) != PROC_ISLIB) &&
                     (picode->du1.idx[0][0] == 0) && (picode->du1.numRegsDef > 0)) {
-                    exp = idCondExpFunc(picode->ic.hl.oper.call.proc, picode->ic.hl.oper.call.args);
-                    lhs = idCondExpID(&picode->ic.hl.oper.call.proc->retVal, &pProc->localId, j);
+                    exp = idCondExpFunc(picode->hl.oper.call.proc, picode->hl.oper.call.args);
+                    lhs = idCondExpID(&picode->hl.oper.call.proc->retVal, &pProc->localId, j);
                     newAsgnHlIcode(picode, lhs, exp);
                 }
             }

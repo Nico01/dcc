@@ -1,5 +1,5 @@
 # Signature tools makefile
-
+CC = clang
 CFLAGS += -Wall
 
 all: srchsig dispsig makedsig parsehdr makedstp readsig

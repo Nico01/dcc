@@ -71,3 +71,13 @@ void reportError(error_msg id, ...)
     vfprintf(stderr, errorMessage[id - 1], args);
     va_end(args);
 }
+
+void dcc_error(const char *str, ...)
+{
+    va_list arg;
+    va_start(arg, str);
+    fprintf(stderr, str, arg);
+    va_end(arg);
+
+    exit(EXIT_FAILURE);
+}

@@ -162,14 +162,14 @@ void writeIntComment(PICODE icode, char *s)
 {
     char *t = malloc(intSize * sizeof(char));
 
-    if (icode->ic.ll.immed.op == 0x21) {
-        sprintf(t, "\t/* %s */\n", int21h[icode->ic.ll.dst.off]);
+    if (icode->ll.immed.op == 0x21) {
+        sprintf(t, "\t/* %s */\n", int21h[icode->ll.dst.off]);
         strcat(s, t);
-    } else if (icode->ic.ll.immed.op > 0x1F && icode->ic.ll.immed.op < 0x2F) {
-        sprintf(t, "\t/* %s */\n", intOthers[icode->ic.ll.immed.op - 0x20]);
+    } else if (icode->ll.immed.op > 0x1F && icode->ll.immed.op < 0x2F) {
+        sprintf(t, "\t/* %s */\n", intOthers[icode->ll.immed.op - 0x20]);
         strcat(s, t);
-    } else if (icode->ic.ll.immed.op == 0x2F)
-        switch (icode->ic.ll.dst.off) {
+    } else if (icode->ll.immed.op == 0x2F)
+        switch (icode->ll.dst.off) {
         case 0x01:
             strcat(s, "\t/* Print spooler */\n");
             break;

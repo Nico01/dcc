@@ -92,16 +92,6 @@ int searchPList(char *name);
 void checkHeap(char *msg); // For debugging
 
 
-void dcc_error(const char *str, ...)
-{
-    va_list arg;
-    va_start(arg, str);
-    fprintf(stderr, str, arg);
-    va_end(arg);
-
-    exit(EXIT_FAILURE);
-}
-
 // This procedure is called to initialise the library check code
 bool SetupLibCheck(void)
 {

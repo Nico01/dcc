@@ -121,11 +121,11 @@ void FrontEnd(char *filename, PCALL_GRAPH *pcallGraph)
     // Search through code looking for impure references and flag them
     for (pProc = pProcList; pProc; pProc = pProc->next) {
         for (i = 0; i < pProc->Icode.numIcode; i++) {
-            if (pProc->Icode.icode[i].ic.ll.flg & (SYM_USE | SYM_DEF)) {
-                psym = &symtab.sym[pProc->Icode.icode[i].ic.ll.caseTbl.numEntries];
+            if (pProc->Icode.icode[i].ll.flg & (SYM_USE | SYM_DEF)) {
+                psym = &symtab.sym[pProc->Icode.icode[i].ll.caseTbl.numEntries];
                 for (c = psym->label; c < psym->label + psym->size; c++) {
                     if (BITMAP(c, BM_CODE)) {
-                        pProc->Icode.icode[i].ic.ll.flg |= IMPURE;
+                        pProc->Icode.icode[i].ll.flg |= IMPURE;
                         pProc->flg |= IMPURE;
                         break;
                     }

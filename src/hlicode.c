@@ -57,40 +57,40 @@ PICODE newIcode(ICODE_REC *icode, PICODE pIcode)
 void newAsgnHlIcode(PICODE pIcode, COND_EXPR *lhs, COND_EXPR *rhs)
 {
     pIcode->type = HIGH_LEVEL;
-    pIcode->ic.hl.opcode = ASSIGN;
-    pIcode->ic.hl.oper.asgn.lhs = lhs;
-    pIcode->ic.hl.oper.asgn.rhs = rhs;
+    pIcode->hl.opcode = ASSIGN;
+    pIcode->hl.oper.asgn.lhs = lhs;
+    pIcode->hl.oper.asgn.rhs = rhs;
 }
 
 // Places the new CALL high-level operand in the high-level icode array
 void newCallHlIcode(PICODE pIcode)
 {
     pIcode->type = HIGH_LEVEL;
-    pIcode->ic.hl.opcode = CALL;
-    pIcode->ic.hl.oper.call.proc = pIcode->ic.ll.immed.proc.proc;
-    pIcode->ic.hl.oper.call.args = allocMem(sizeof(STKFRAME));
-    memset(pIcode->ic.hl.oper.call.args, 0, sizeof(STKFRAME));
+    pIcode->hl.opcode = CALL;
+    pIcode->hl.oper.call.proc = pIcode->ll.immed.proc.proc;
+    pIcode->hl.oper.call.args = allocMem(sizeof(STKFRAME));
+    memset(pIcode->hl.oper.call.args, 0, sizeof(STKFRAME));
 
-    if (pIcode->ic.ll.immed.proc.cb != 0)
-        pIcode->ic.hl.oper.call.args->cb = pIcode->ic.ll.immed.proc.cb;
+    if (pIcode->ll.immed.proc.cb != 0)
+        pIcode->hl.oper.call.args->cb = pIcode->ll.immed.proc.cb;
     else
-        pIcode->ic.hl.oper.call.args->cb = pIcode->ic.hl.oper.call.proc->cbParam;
+        pIcode->hl.oper.call.args->cb = pIcode->hl.oper.call.proc->cbParam;
 }
 
 // Places the new POP/PUSH/RET high-level operand in the high-level icode array
 void newUnaryHlIcode(PICODE pIcode, hlIcode op, COND_EXPR *exp)
 {
     pIcode->type = HIGH_LEVEL;
-    pIcode->ic.hl.opcode = op;
-    pIcode->ic.hl.oper.exp = exp;
+    pIcode->hl.opcode = op;
+    pIcode->hl.oper.exp = exp;
 }
 
 // Places the new JCOND high-level operand in the high-level icode array
 void newJCondHlIcode(PICODE pIcode, COND_EXPR *cexp)
 {
     pIcode->type = HIGH_LEVEL;
-    pIcode->ic.hl.opcode = JCOND;
-    pIcode->ic.hl.oper.exp = cexp;
+    pIcode->hl.opcode = JCOND;
+    pIcode->hl.oper.exp = cexp;
 }
 
 /*
@@ -117,16 +117,16 @@ bool removeDefRegi(uint8_t regi, PICODE picode, int thisDefIdx, LOCAL_ID *locId)
         invalidateIcode(picode);
         return true;
     } else {
-        switch (picode->ic.hl.opcode) {
+        switch (picode->hl.opcode) {
         default: break;
         case ASSIGN:
-            removeRegFromLong(regi, locId, picode->ic.hl.oper.asgn.lhs);
+            removeRegFromLong(regi, locId, picode->hl.oper.asgn.lhs);
             picode->du1.numRegsDef--;
             picode->du.def &= maskDuReg[regi];
             break;
         case POP:
         case PUSH:
-            removeRegFromLong(regi, locId, picode->ic.hl.oper.exp);
+            removeRegFromLong(regi, locId, picode->hl.oper.exp);
             picode->du1.numRegsDef--;
             picode->du.def &= maskDuReg[regi];
             break;
@@ -149,10 +149,10 @@ void highLevelGen(PPROC pProc)
 
     for (int i = 0; i < numIcode; i++) {
         pIcode = &pProc->Icode.icode[i];
-        if ((pIcode->ic.ll.flg & NOT_HLL) == NOT_HLL)
+        if ((pIcode->ll.flg & NOT_HLL) == NOT_HLL)
             invalidateIcode(pIcode);
         if ((pIcode->type == LOW_LEVEL) && (pIcode->invalid == false)) {
-            flg = pIcode->ic.ll.flg;
+            flg = pIcode->ll.flg;
             if ((flg & IM_OPS) != IM_OPS)         // not processing IM_OPS yet
                 if ((flg & NO_OPS) != NO_OPS) {   // if there are opers
                     if ((flg & NO_SRC) != NO_SRC) // if there is src op
@@ -160,7 +160,7 @@ void highLevelGen(PPROC pProc)
                     lhs = idCondExp(pIcode, DST, pProc, i, pIcode, NONE);
                 }
 
-            switch (pIcode->ic.ll.opcode) {
+            switch (pIcode->ll.opcode) {
             default: break;
             case iADD:
                 rhs = boolCondExp(lhs, rhs, ADD);
@@ -186,7 +186,7 @@ void highLevelGen(PPROC pProc)
             case iDIV:
             case iIDIV: // should be signed div
                 rhs = boolCondExp(lhs, rhs, DIV);
-                if (pIcode->ic.ll.flg & B) {
+                if (pIcode->ll.flg & B) {
                     lhs = idCondExpReg(rAL, 0, &pProc->localId);
                     setRegDU(pIcode, rAL, DEF);
                 } else {
@@ -215,7 +215,7 @@ void highLevelGen(PPROC pProc)
 
             case iMOD:
                 rhs = boolCondExp(lhs, rhs, MOD);
-                if (pIcode->ic.ll.flg & B) {
+                if (pIcode->ll.flg & B) {
                     lhs = idCondExpReg(rAH, 0, &pProc->localId);
                     setRegDU(pIcode, rAH, DEF);
                 } else {
@@ -502,8 +502,8 @@ void writeDU(PICODE pIcode, int idx)
         }
 
     // For CALL, print # parameter bytes
-    if (pIcode->ic.hl.opcode == CALL)
-        printf("# param bytes = %d\n", pIcode->ic.hl.oper.call.args->cb);
+    if (pIcode->hl.opcode == CALL)
+        printf("# param bytes = %d\n", pIcode->hl.oper.call.args->cb);
     printf("\n");
 }
 
@@ -511,7 +511,7 @@ void writeDU(PICODE pIcode, int idx)
 void freeHlIcode(PICODE icode, int numIcodes)
 {
     for (int i = 0; i < numIcodes; i++) {
-        struct _hl h = icode[i].ic.hl;
+        struct _hl h = icode[i].hl;
         switch (h.opcode) {
         default: break;
         case ASSIGN:

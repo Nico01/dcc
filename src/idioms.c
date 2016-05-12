@@ -69,22 +69,22 @@ static int checkStkVars(PICODE pIcode, PICODE pEnd, PPROC pProc)
 {
     // Look for PUSH SI
     if (pIcode < pEnd) {
-        if ((pIcode->ic.ll.opcode == iPUSH) && (pIcode->ic.ll.dst.regi == rSI)) {
+        if ((pIcode->ll.opcode == iPUSH) && (pIcode->ll.dst.regi == rSI)) {
             pProc->flg |= SI_REGVAR;
 
             // Look for PUSH DI
-            if (++pIcode < pEnd && (pIcode->ic.ll.opcode == iPUSH) &&
-                (pIcode->ic.ll.dst.regi == rDI)) {
+            if (++pIcode < pEnd && (pIcode->ll.opcode == iPUSH) &&
+                (pIcode->ll.dst.regi == rDI)) {
                 pProc->flg |= DI_REGVAR;
                 return 2;
             } else
                 return 1;
-        } else if ((pIcode->ic.ll.opcode == iPUSH) && (pIcode->ic.ll.dst.regi == rDI)) {
+        } else if ((pIcode->ll.opcode == iPUSH) && (pIcode->ll.dst.regi == rDI)) {
             pProc->flg |= DI_REGVAR;
 
             // Look for PUSH SI
-            if ((++pIcode < pEnd) && (pIcode->ic.ll.opcode == iPUSH) &&
-                (pIcode->ic.ll.dst.regi == rSI)) {
+            if ((++pIcode < pEnd) && (pIcode->ll.opcode == iPUSH) &&
+                (pIcode->ll.dst.regi == rSI)) {
                 pProc->flg |= SI_REGVAR;
                 return 2;
             } else
@@ -115,17 +115,17 @@ static int checkStkVars(PICODE pIcode, PICODE pEnd, PPROC pProc)
 static int idiom1(PICODE pIcode, PICODE pEnd, PPROC pProc)
 {
     // PUSH BP as first instruction of procedure
-    if (!(pIcode->ic.ll.flg & I) && pIcode->ic.ll.src.regi == rBP) {
+    if (!(pIcode->ll.flg & I) && pIcode->ll.src.regi == rBP) {
         // MOV BP, SP as next instruction
-        if (++pIcode < pEnd && !(pIcode->ic.ll.flg & (I | TARGET | CASE)) &&
-            pIcode->ic.ll.opcode == iMOV && pIcode->ic.ll.dst.regi == rBP &&
-            pIcode->ic.ll.src.regi == rSP) {
+        if (++pIcode < pEnd && !(pIcode->ll.flg & (I | TARGET | CASE)) &&
+            pIcode->ll.opcode == iMOV && pIcode->ll.dst.regi == rBP &&
+            pIcode->ll.src.regi == rSP) {
             pProc->args.minOff = 2;
             pProc->flg |= PROC_IS_HLL;
 
             // Look for SUB SP, immed
-            if ((++pIcode < pEnd) && (pIcode->ic.ll.flg & (I | TARGET | CASE)) == I &&
-                pIcode->ic.ll.opcode == iSUB && pIcode->ic.ll.dst.regi == rSP) {
+            if ((++pIcode < pEnd) && (pIcode->ll.flg & (I | TARGET | CASE)) == I &&
+                pIcode->ll.opcode == iSUB && pIcode->ll.dst.regi == rSP) {
                 return (3 + checkStkVars(++pIcode, pEnd, pProc));
             } else
                 return (2 + checkStkVars(pIcode, pEnd, pProc));
@@ -138,9 +138,9 @@ static int idiom1(PICODE pIcode, PICODE pEnd, PPROC pProc)
             int n = checkStkVars(pIcode, pEnd, pProc);
             if (n > 0) { // Look for MOV BP, SP
                 pIcode += n;
-                if (pIcode < pEnd && !(pIcode->ic.ll.flg & (I | TARGET | CASE)) &&
-                    pIcode->ic.ll.opcode == iMOV && pIcode->ic.ll.dst.regi == rBP &&
-                    pIcode->ic.ll.src.regi == rSP) {
+                if (pIcode < pEnd && !(pIcode->ll.flg & (I | TARGET | CASE)) &&
+                    pIcode->ll.opcode == iMOV && pIcode->ll.dst.regi == rBP &&
+                    pIcode->ll.src.regi == rSP) {
                     pProc->args.minOff = 2 + (n * 2);
                     return (2 + n);
                 }
@@ -160,18 +160,18 @@ static int idiom1(PICODE pIcode, PICODE pEnd, PPROC pProc)
 static void popStkVars(PICODE pIcode, PICODE pEnd, PPROC pProc)
 {
     // Match [POP DI]
-    if (pIcode->ic.ll.opcode == iPOP) {
-        if ((pProc->flg & DI_REGVAR) && (pIcode->ic.ll.dst.regi == rDI))
+    if (pIcode->ll.opcode == iPOP) {
+        if ((pProc->flg & DI_REGVAR) && (pIcode->ll.dst.regi == rDI))
             invalidateIcode(pIcode);
-        else if ((pProc->flg & SI_REGVAR) && (pIcode->ic.ll.dst.regi == rSI))
+        else if ((pProc->flg & SI_REGVAR) && (pIcode->ll.dst.regi == rSI))
             invalidateIcode(pIcode);
     }
 
     // Match [POP SI]
-    if ((pIcode + 1)->ic.ll.opcode == iPOP) {
-        if ((pProc->flg & SI_REGVAR) && ((pIcode + 1)->ic.ll.dst.regi == rSI))
+    if ((pIcode + 1)->ll.opcode == iPOP) {
+        if ((pProc->flg & SI_REGVAR) && ((pIcode + 1)->ll.dst.regi == rSI))
             invalidateIcode(pIcode + 1);
-        else if ((pProc->flg & DI_REGVAR) && ((pIcode + 1)->ic.ll.dst.regi == rDI))
+        else if ((pProc->flg & DI_REGVAR) && ((pIcode + 1)->ll.dst.regi == rDI))
             invalidateIcode(pIcode + 1);
     }
 }
@@ -189,21 +189,21 @@ static int idiom2(PICODE pIcode, PICODE pEnd, int ip, PPROC pProc)
     PICODE nicode;
 
     // Match MOV SP, BP
-    if (ip != 0 && ((pIcode->ic.ll.flg & I) != I) && pIcode->ic.ll.dst.regi == rSP &&
-        pIcode->ic.ll.src.regi == rBP) {
+    if (ip != 0 && ((pIcode->ll.flg & I) != I) && pIcode->ll.dst.regi == rSP &&
+        pIcode->ll.src.regi == rBP) {
         // Get next icode, skip over holes in the icode array
         nicode = pIcode + 1;
-        while (nicode->ic.ll.flg & NO_CODE)
+        while (nicode->ll.flg & NO_CODE)
             nicode++;
 
         // Match POP BP
-        if (nicode < pEnd && !(nicode->ic.ll.flg & (I | TARGET | CASE)) &&
-            nicode->ic.ll.opcode == iPOP && nicode->ic.ll.dst.regi == rBP) {
+        if (nicode < pEnd && !(nicode->ll.flg & (I | TARGET | CASE)) &&
+            nicode->ll.opcode == iPOP && nicode->ll.dst.regi == rBP) {
             nicode++;
 
             // Match RET(F)
-            if (nicode < pEnd && !(nicode->ic.ll.flg & (I | TARGET | CASE)) &&
-                (nicode->ic.ll.opcode == iRET || nicode->ic.ll.opcode == iRETF)) {
+            if (nicode < pEnd && !(nicode->ll.flg & (I | TARGET | CASE)) &&
+                (nicode->ll.opcode == iRET || nicode->ll.opcode == iRETF)) {
                 popStkVars(pIcode - 2, pEnd, pProc);
                 return 2;
             }
@@ -227,12 +227,12 @@ static int idiom2(PICODE pIcode, PICODE pEnd, int ip, PPROC pProc)
 static int idiom3(PICODE pIcode, PICODE pEnd)
 {
     // Match ADD  SP, immed
-    if ((++pIcode < pEnd) && (pIcode->ic.ll.flg & I) && (pIcode->ic.ll.opcode == iADD) &&
-        (pIcode->ic.ll.dst.regi == rSP))
-        return (pIcode->ic.ll.immed.op);
-    else if ((pIcode->ic.ll.opcode == iMOV) && (pIcode->ic.ll.dst.regi == rSP) &&
-             (pIcode->ic.ll.src.regi == rBP))
-        (pIcode - 1)->ic.ll.flg |= REST_STK;
+    if ((++pIcode < pEnd) && (pIcode->ll.flg & I) && (pIcode->ll.opcode == iADD) &&
+        (pIcode->ll.dst.regi == rSP))
+        return (pIcode->ll.immed.op);
+    else if ((pIcode->ll.opcode == iMOV) && (pIcode->ll.dst.regi == rSP) &&
+             (pIcode->ll.src.regi == rBP))
+        (pIcode - 1)->ll.flg |= REST_STK;
 
     return 0;
 }
@@ -254,12 +254,12 @@ static int idiom17(PICODE pIcode, PICODE pEnd)
     int i = 0; // Count on # pops
 
     // Match POP reg
-    if ((++pIcode < pEnd) && (pIcode->ic.ll.opcode == iPOP)) {
-        uint8_t regi = pIcode->ic.ll.dst.regi;
+    if ((++pIcode < pEnd) && (pIcode->ll.opcode == iPOP)) {
+        uint8_t regi = pIcode->ll.dst.regi;
         if ((regi >= rAX) && (regi <= rBX))
             i++;
-        while ((++pIcode)->ic.ll.opcode == iPOP) {
-            if (pIcode->ic.ll.dst.regi == regi)
+        while ((++pIcode)->ll.opcode == iPOP) {
+            if (pIcode->ll.dst.regi == regi)
                 i++;
             else
                 break;
@@ -291,15 +291,15 @@ static void idiom4(PICODE pIcode, PICODE pEnd, PPROC pProc)
     popStkVars(pIcode - 3, pEnd, pProc);
 
     // Check for POP BP
-    if (((pIcode - 1)->ic.ll.opcode == iPOP) && (((pIcode - 1)->ic.ll.flg & I) != I) &&
-        ((pIcode - 1)->ic.ll.dst.regi == rBP))
+    if (((pIcode - 1)->ll.opcode == iPOP) && (((pIcode - 1)->ll.flg & I) != I) &&
+        ((pIcode - 1)->ll.dst.regi == rBP))
         invalidateIcode(pIcode - 1);
     else
         popStkVars(pIcode - 2, pEnd, pProc);
 
     // Check for RET(F) immed
-    if (pIcode->ic.ll.flg & I) {
-        pProc->cbParam = (int16_t)pIcode->ic.ll.immed.op;
+    if (pIcode->ll.flg & I) {
+        pProc->cbParam = (int16_t)pIcode->ll.immed.op;
         pProc->flg |= CALL_PASCAL;
     }
 }
@@ -317,7 +317,7 @@ static void idiom4(PICODE pIcode, PICODE pEnd, PPROC pProc)
 static bool idiom5(PICODE pIcode, PICODE pEnd)
 {
     if (pIcode < pEnd)
-        if ((pIcode + 1)->ic.ll.opcode == iADC)
+        if ((pIcode + 1)->ll.opcode == iADC)
             return true;
 
     return false;
@@ -336,7 +336,7 @@ static bool idiom5(PICODE pIcode, PICODE pEnd)
 static bool idiom6(PICODE pIcode, PICODE pEnd)
 {
     if (pIcode < pEnd)
-        if ((pIcode + 1)->ic.ll.opcode == iSBB)
+        if ((pIcode + 1)->ll.opcode == iSBB)
             return true;
 
     return false;
@@ -351,8 +351,8 @@ static bool idiom6(PICODE pIcode, PICODE pEnd)
 */
 static bool idiom7(PICODE pIcode)
 {
-    PMEM dst = &pIcode->ic.ll.dst;
-    PMEM src = &pIcode->ic.ll.src;
+    PMEM dst = &pIcode->ll.dst;
+    PMEM src = &pIcode->ll.src;
 
     if (dst->regi == 0) { // global variable
         if ((dst->segValue == src->segValue) && (dst->off == src->off))
@@ -383,14 +383,14 @@ static bool idiom7(PICODE pIcode)
 */
 static bool idiom21(PICODE picode, PICODE pend)
 {
-    PMEM dst = &picode->ic.ll.dst;
-    PMEM src = &picode->ic.ll.src;
+    PMEM dst = &picode->ll.dst;
+    PMEM src = &picode->ll.src;
 
-    if (((picode + 1) < pend) && ((picode + 1)->ic.ll.flg & I)) {
+    if (((picode + 1) < pend) && ((picode + 1)->ll.flg & I)) {
         if ((dst->regi == src->regi) && (dst->regi > 0) && (dst->regi < INDEXBASE)) {
-            if ((dst->regi == rDX) && ((picode + 1)->ic.ll.dst.regi == rAX))
+            if ((dst->regi == rDX) && ((picode + 1)->ll.dst.regi == rAX))
                 return true;
-            if ((dst->regi == rCX) && ((picode + 1)->ic.ll.dst.regi == rBX))
+            if ((dst->regi == rCX) && ((picode + 1)->ll.dst.regi == rBX))
                 return true;
         }
     }
@@ -409,9 +409,9 @@ static bool idiom21(PICODE picode, PICODE pend)
 static bool idiom8(PICODE pIcode, PICODE pEnd)
 {
     if (pIcode < pEnd) {
-        if (((pIcode->ic.ll.flg & I) == I) && (pIcode->ic.ll.immed.op == 1))
-            if (((pIcode + 1)->ic.ll.opcode == iRCR) && (((pIcode + 1)->ic.ll.flg & I) == I) &&
-                ((pIcode + 1)->ic.ll.immed.op == 1))
+        if (((pIcode->ll.flg & I) == I) && (pIcode->ll.immed.op == 1))
+            if (((pIcode + 1)->ll.opcode == iRCR) && (((pIcode + 1)->ll.flg & I) == I) &&
+                ((pIcode + 1)->ll.immed.op == 1))
                 return true;
     }
     return false;
@@ -434,12 +434,12 @@ static int idiom15(PICODE picode, PICODE pend)
 
     if (picode < pend) {
         // Match SHL reg, 1
-        if ((picode->ic.ll.flg & I) && (picode->ic.ll.immed.op == 1)) {
-            uint8_t regi = picode->ic.ll.dst.regi;
+        if ((picode->ll.flg & I) && (picode->ll.immed.op == 1)) {
+            uint8_t regi = picode->ll.dst.regi;
             while (1) {
-                if (((picode + n) < pend) && ((picode + n)->ic.ll.opcode == iSHL) &&
-                    ((picode + n)->ic.ll.flg & I) && ((picode + n)->ic.ll.immed.op == 1) &&
-                    ((picode + n)->ic.ll.dst.regi == regi))
+                if (((picode + n) < pend) && ((picode + n)->ll.opcode == iSHL) &&
+                    ((picode + n)->ll.flg & I) && ((picode + n)->ll.immed.op == 1) &&
+                    ((picode + n)->ll.dst.regi == regi))
                     n++;
                 else
                     break;
@@ -465,9 +465,9 @@ static int idiom15(PICODE picode, PICODE pend)
 static bool idiom12(PICODE pIcode, PICODE pEnd)
 {
     if (pIcode < pEnd) {
-        if (((pIcode->ic.ll.flg & I) == I) && (pIcode->ic.ll.immed.op == 1))
-            if (((pIcode + 1)->ic.ll.opcode == iRCL) && (((pIcode + 1)->ic.ll.flg & I) == I) &&
-                ((pIcode + 1)->ic.ll.immed.op == 1))
+        if (((pIcode->ll.flg & I) == I) && (pIcode->ll.immed.op == 1))
+            if (((pIcode + 1)->ll.opcode == iRCL) && (((pIcode + 1)->ll.flg & I) == I) &&
+                ((pIcode + 1)->ll.immed.op == 1))
                 return true;
     }
     return false;
@@ -485,9 +485,9 @@ static bool idiom12(PICODE pIcode, PICODE pEnd)
 static bool idiom9(PICODE pIcode, PICODE pEnd)
 {
     if (pIcode < pEnd) {
-        if (((pIcode->ic.ll.flg & I) == I) && (pIcode->ic.ll.immed.op == 1))
-            if (((pIcode + 1)->ic.ll.opcode == iRCR) && (((pIcode + 1)->ic.ll.flg & I) == I) &&
-                ((pIcode + 1)->ic.ll.immed.op == 1))
+        if (((pIcode->ll.flg & I) == I) && (pIcode->ll.immed.op == 1))
+            if (((pIcode + 1)->ll.opcode == iRCR) && (((pIcode + 1)->ll.flg & I) == I) &&
+                ((pIcode + 1)->ll.immed.op == 1))
                 return true;
     }
     return false;
@@ -511,13 +511,13 @@ static void idiom10(PICODE pIcode, PICODE pEnd)
 {
     if (pIcode < pEnd) {
         // Check OR reg, reg
-        if (((pIcode->ic.ll.flg & I) != I) && (pIcode->ic.ll.src.regi > 0) &&
-            (pIcode->ic.ll.src.regi < INDEXBASE) &&
-            (pIcode->ic.ll.src.regi == pIcode->ic.ll.dst.regi))
-            if (((pIcode + 1) < pEnd) && ((pIcode + 1)->ic.ll.opcode == iJNE)) {
-                pIcode->ic.ll.opcode = iCMP;
-                pIcode->ic.ll.flg |= I;
-                pIcode->ic.ll.immed.op = 0;
+        if (((pIcode->ll.flg & I) != I) && (pIcode->ll.src.regi > 0) &&
+            (pIcode->ll.src.regi < INDEXBASE) &&
+            (pIcode->ll.src.regi == pIcode->ll.dst.regi))
+            if (((pIcode + 1) < pEnd) && ((pIcode + 1)->ll.opcode == iJNE)) {
+                pIcode->ll.opcode = iCMP;
+                pIcode->ll.flg |= I;
+                pIcode->ll.immed.op = 0;
                 pIcode->du.def = 0;
                 pIcode->du1.numRegsDef = 0;
             }
@@ -538,12 +538,12 @@ static uint8_t idiom13(PICODE picode, PICODE pend)
 {
     if (picode < pend) {
         // Check for regL
-        uint8_t regi = picode->ic.ll.dst.regi;
-        if (((picode->ic.ll.flg & I) != I) && (regi >= rAL) && (regi <= rBH)) {
+        uint8_t regi = picode->ll.dst.regi;
+        if (((picode->ll.flg & I) != I) && (regi >= rAL) && (regi <= rBH)) {
             // Check for MOV regH, 0
-            if (((picode + 1)->ic.ll.opcode == iMOV) && ((picode + 1)->ic.ll.flg & I) &&
-                ((picode + 1)->ic.ll.immed.op == 0)) {
-                if ((picode + 1)->ic.ll.dst.regi == (regi + 4))
+            if (((picode + 1)->ll.opcode == iMOV) && ((picode + 1)->ll.flg & I) &&
+                ((picode + 1)->ll.immed.op == 0)) {
+                if ((picode + 1)->ll.dst.regi == (regi + 4))
                     return (regi - rAL + rAX);
             }
         }
@@ -571,12 +571,12 @@ static bool idiom14(PICODE picode, PICODE pend, uint8_t *regL, uint8_t *regH)
 {
     if (picode < pend) {
         // Check for regL
-        *regL = picode->ic.ll.dst.regi;
-        if (((picode->ic.ll.flg & I) != I) && ((*regL == rAX) || (*regL == rBX))) {
+        *regL = picode->ll.dst.regi;
+        if (((picode->ll.flg & I) != I) && ((*regL == rAX) || (*regL == rBX))) {
             // Check for XOR regH, regH
-            if (((picode + 1)->ic.ll.opcode == iXOR) && (((picode + 1)->ic.ll.flg & I) != I)) {
-                *regH = (picode + 1)->ic.ll.dst.regi;
-                if (*regH == (picode + 1)->ic.ll.src.regi) {
+            if (((picode + 1)->ll.opcode == iXOR) && (((picode + 1)->ll.flg & I) != I)) {
+                *regH = (picode + 1)->ll.dst.regi;
+                if (*regH == (picode + 1)->ll.src.regi) {
                     if ((*regL == rAX) && (*regH == rDX))
                         return true;
                     if ((*regL == rBX) && (*regH == rCX))
@@ -608,22 +608,22 @@ static bool idiom11(PICODE pIcode, PICODE pEnd)
         if ((type != CONST) && (type != OTHER)) {
             /* Check NEG reg/mem
                      SBB reg/mem, 0 */
-            if (((pIcode + 1)->ic.ll.opcode == iNEG) && ((pIcode + 2)->ic.ll.opcode == iSBB))
+            if (((pIcode + 1)->ll.opcode == iNEG) && ((pIcode + 2)->ll.opcode == iSBB))
                 switch (type) {
                 default:
                     break;
                 case GLOB_VAR:
-                    if (((pIcode + 2)->ic.ll.dst.segValue == pIcode->ic.ll.dst.segValue) &&
-                        ((pIcode + 2)->ic.ll.dst.off == pIcode->ic.ll.dst.off))
+                    if (((pIcode + 2)->ll.dst.segValue == pIcode->ll.dst.segValue) &&
+                        ((pIcode + 2)->ll.dst.off == pIcode->ll.dst.off))
                         return true;
                     break;
                 case REGISTER:
-                    if ((pIcode + 2)->ic.ll.dst.regi == pIcode->ic.ll.dst.regi)
+                    if ((pIcode + 2)->ll.dst.regi == pIcode->ll.dst.regi)
                         return true;
                     break;
                 case PARAM:
                 case LOCAL_VAR:
-                    if ((pIcode + 2)->ic.ll.dst.off == pIcode->ic.ll.dst.off)
+                    if ((pIcode + 2)->ll.dst.off == pIcode->ll.dst.off)
                         return true;
                     break;
                 }
@@ -647,12 +647,12 @@ static bool idiom11(PICODE pIcode, PICODE pEnd)
 static bool idiom16(PICODE picode, PICODE pend)
 {
     if ((picode + 2) < pend) {
-        uint8_t regi = picode->ic.ll.dst.regi;
+        uint8_t regi = picode->ll.dst.regi;
         if ((regi >= rAX) && (regi < INDEXBASE)) {
-            if (((picode + 1)->ic.ll.opcode == iSBB) && ((picode + 2)->ic.ll.opcode == iINC))
-                if (((picode + 1)->ic.ll.dst.regi == ((picode + 1)->ic.ll.src.regi)) &&
-                    ((picode + 1)->ic.ll.dst.regi == regi) &&
-                    ((picode + 2)->ic.ll.dst.regi == regi))
+            if (((picode + 1)->ll.opcode == iSBB) && ((picode + 2)->ll.opcode == iINC))
+                if (((picode + 1)->ll.dst.regi == ((picode + 1)->ll.src.regi)) &&
+                    ((picode + 1)->ll.dst.regi == regi) &&
+                    ((picode + 2)->ll.dst.regi == regi))
                     return true;
         }
     }
@@ -679,36 +679,36 @@ static bool idiom18(PICODE picode, PICODE pend, PPROC pproc)
     uint8_t regi;     // register of the MOV
 
     // Get variable
-    if (picode->ic.ll.dst.regi < INDEXBASE) { // register
-        if ((picode->ic.ll.dst.regi == rSI) && (pproc->flg & SI_REGVAR))
+    if (picode->ll.dst.regi < INDEXBASE) { // register
+        if ((picode->ll.dst.regi == rSI) && (pproc->flg & SI_REGVAR))
             type = 1;
-        else if ((picode->ic.ll.dst.regi == rDI) && (pproc->flg & DI_REGVAR))
+        else if ((picode->ll.dst.regi == rDI) && (pproc->flg & DI_REGVAR))
             type = 1;
-    } else if (picode->ic.ll.dst.off) // local variable
+    } else if (picode->ll.dst.off) // local variable
         type = 2;
 
     // Check previous instruction for a MOV
     if (type == 1) { // register variable
-        if (((picode - 1)->ic.ll.opcode == iMOV) &&
-            ((picode - 1)->ic.ll.src.regi == picode->ic.ll.dst.regi)) {
-            regi = (picode - 1)->ic.ll.dst.regi;
+        if (((picode - 1)->ll.opcode == iMOV) &&
+            ((picode - 1)->ll.src.regi == picode->ll.dst.regi)) {
+            regi = (picode - 1)->ll.dst.regi;
             if ((regi > 0) && (regi < INDEXBASE)) {
                 if ((picode < pend) && ((picode + 1) < pend) &&
-                    ((picode + 1)->ic.ll.opcode == iCMP) &&
-                    ((picode + 1)->ic.ll.dst.regi == regi) &&
-                    (((picode + 2)->ic.ll.opcode >= iJB) && ((picode + 2)->ic.ll.opcode < iJCXZ)))
+                    ((picode + 1)->ll.opcode == iCMP) &&
+                    ((picode + 1)->ll.dst.regi == regi) &&
+                    (((picode + 2)->ll.opcode >= iJB) && ((picode + 2)->ll.opcode < iJCXZ)))
                     return true;
             }
         }
     } else if (type == 2) { // local
-        if (((picode - 1)->ic.ll.opcode == iMOV) &&
-            ((picode - 1)->ic.ll.src.off == picode->ic.ll.dst.off)) {
-            regi = (picode - 1)->ic.ll.dst.regi;
+        if (((picode - 1)->ll.opcode == iMOV) &&
+            ((picode - 1)->ll.src.off == picode->ll.dst.off)) {
+            regi = (picode - 1)->ll.dst.regi;
             if ((regi > 0) && (regi < INDEXBASE)) {
                 if ((picode < pend) && ((picode + 1) < pend) &&
-                    ((picode + 1)->ic.ll.opcode == iCMP) &&
-                    ((picode + 1)->ic.ll.dst.regi == regi) &&
-                    (((picode + 2)->ic.ll.opcode >= iJB) && ((picode + 2)->ic.ll.opcode < iJCXZ)))
+                    ((picode + 1)->ll.opcode == iCMP) &&
+                    ((picode + 1)->ll.dst.regi == regi) &&
+                    (((picode + 2)->ll.opcode >= iJB) && ((picode + 2)->ll.opcode < iJCXZ)))
                     return true;
             }
         }
@@ -728,15 +728,15 @@ static bool idiom18(PICODE picode, PICODE pend, PPROC pproc)
 */
 static bool idiom19(PICODE picode, PICODE pend, PPROC pproc)
 {
-    if (picode->ic.ll.dst.regi < INDEXBASE) { // register
-        if (((picode->ic.ll.dst.regi == rSI) && (pproc->flg & SI_REGVAR)) ||
-            ((picode->ic.ll.dst.regi == rDI) && (pproc->flg & DI_REGVAR)))
-            if ((picode < pend) && ((picode + 1)->ic.ll.opcode >= iJB) &&
-                ((picode + 1)->ic.ll.opcode < iJCXZ))
+    if (picode->ll.dst.regi < INDEXBASE) { // register
+        if (((picode->ll.dst.regi == rSI) && (pproc->flg & SI_REGVAR)) ||
+            ((picode->ll.dst.regi == rDI) && (pproc->flg & DI_REGVAR)))
+            if ((picode < pend) && ((picode + 1)->ll.opcode >= iJB) &&
+                ((picode + 1)->ll.opcode < iJCXZ))
                 return true;
-    } else if (picode->ic.ll.dst.off) { // stack variable
-        if ((picode < pend) && ((picode + 1)->ic.ll.opcode >= iJB) &&
-            ((picode + 1)->ic.ll.opcode < iJCXZ))
+    } else if (picode->ll.dst.off) { // stack variable
+        if ((picode < pend) && ((picode + 1)->ll.opcode >= iJB) &&
+            ((picode + 1)->ll.opcode < iJCXZ))
             return true;
     }
     return false;
@@ -763,38 +763,38 @@ static bool idiom20(PICODE picode, PICODE pend, PPROC pproc)
     uint8_t regi;     // register of the MOV
 
     // Get variable
-    if (picode->ic.ll.dst.regi < INDEXBASE) { // register
-        if ((picode->ic.ll.dst.regi == rSI) && (pproc->flg & SI_REGVAR))
+    if (picode->ll.dst.regi < INDEXBASE) { // register
+        if ((picode->ll.dst.regi == rSI) && (pproc->flg & SI_REGVAR))
             type = 1;
-        else if ((picode->ic.ll.dst.regi == rDI) && (pproc->flg & DI_REGVAR))
+        else if ((picode->ll.dst.regi == rDI) && (pproc->flg & DI_REGVAR))
             type = 1;
     }
-    else if (picode->ic.ll.dst.off) // local variable
+    else if (picode->ll.dst.off) // local variable
         type = 2;
 
     // Check previous instruction for a MOV
     if (type == 1) { // register variable
-        if ((picode < pend) && ((picode + 1)->ic.ll.opcode == iMOV) &&
-            ((picode + 1)->ic.ll.src.regi == picode->ic.ll.dst.regi)) {
-            regi = (picode + 1)->ic.ll.dst.regi;
+        if ((picode < pend) && ((picode + 1)->ll.opcode == iMOV) &&
+            ((picode + 1)->ll.src.regi == picode->ll.dst.regi)) {
+            regi = (picode + 1)->ll.dst.regi;
             if ((regi > 0) && (regi < INDEXBASE)) {
                 if (((picode + 1) < pend) && ((picode + 2) < pend) &&
-                    ((picode + 2)->ic.ll.opcode == iCMP) &&
-                    ((picode + 2)->ic.ll.dst.regi == regi) &&
-                    (((picode + 3)->ic.ll.opcode >= iJB) && ((picode + 3)->ic.ll.opcode < iJCXZ)))
+                    ((picode + 2)->ll.opcode == iCMP) &&
+                    ((picode + 2)->ll.dst.regi == regi) &&
+                    (((picode + 3)->ll.opcode >= iJB) && ((picode + 3)->ll.opcode < iJCXZ)))
                     return true;
             }
         }
     }
     else if (type == 2) { // local
-        if ((picode < pend) && ((picode + 1)->ic.ll.opcode == iMOV) &&
-            ((picode + 1)->ic.ll.src.off == picode->ic.ll.dst.off)) {
-            regi = (picode + 1)->ic.ll.dst.regi;
+        if ((picode < pend) && ((picode + 1)->ll.opcode == iMOV) &&
+            ((picode + 1)->ll.src.off == picode->ll.dst.off)) {
+            regi = (picode + 1)->ll.dst.regi;
             if ((regi > 0) && (regi < INDEXBASE)) {
                 if (((picode + 1) < pend) && ((picode + 2) < pend) &&
-                    ((picode + 2)->ic.ll.opcode == iCMP) &&
-                    ((picode + 2)->ic.ll.dst.regi == regi) &&
-                    (((picode + 3)->ic.ll.opcode >= iJB) && ((picode + 3)->ic.ll.opcode < iJCXZ)))
+                    ((picode + 2)->ll.opcode == iCMP) &&
+                    ((picode + 2)->ll.dst.regi == regi) &&
+                    (((picode + 3)->ll.opcode >= iJB) && ((picode + 3)->ll.opcode < iJCXZ)))
                     return true;
             }
         }
@@ -817,17 +817,17 @@ void findIdioms(PPROC pProc)
     ip = 0;
 
     while (pIcode < pEnd) {
-        switch (pIcode->ic.ll.opcode) {
+        switch (pIcode->ll.opcode) {
         case iDEC:
         case iINC:
             if (idiom18(pIcode, pEnd, pProc)) {
                 lhs = idCondExp(pIcode - 1, SRC, pProc, ip, pIcode, USE);
-                if (pIcode->ic.ll.opcode == iDEC)
+                if (pIcode->ll.opcode == iDEC)
                     lhs = unaryCondExp(POST_DEC, lhs);
                 else
                     lhs = unaryCondExp(POST_INC, lhs);
                 rhs = idCondExp(pIcode + 1, SRC, pProc, ip, pIcode + 2, USE);
-                exp = boolCondExp(lhs, rhs, condOpJCond[(pIcode + 2)->ic.ll.opcode - iJB]);
+                exp = boolCondExp(lhs, rhs, condOpJCond[(pIcode + 2)->ll.opcode - iJB]);
                 newJCondHlIcode(pIcode + 2, exp);
                 invalidateIcode(pIcode - 1);
                 invalidateIcode(pIcode);
@@ -836,24 +836,24 @@ void findIdioms(PPROC pProc)
                 ip += 2;
             } else if (idiom19(pIcode, pEnd, pProc)) {
                 lhs = idCondExp(pIcode, DST, pProc, ip, pIcode + 1, USE);
-                if (pIcode->ic.ll.opcode == iDEC)
+                if (pIcode->ll.opcode == iDEC)
                     lhs = unaryCondExp(PRE_DEC, lhs);
                 else
                     lhs = unaryCondExp(PRE_INC, lhs);
                 rhs = idCondExpKte(0, 2);
-                exp = boolCondExp(lhs, rhs, condOpJCond[(pIcode + 1)->ic.ll.opcode - iJB]);
+                exp = boolCondExp(lhs, rhs, condOpJCond[(pIcode + 1)->ll.opcode - iJB]);
                 newJCondHlIcode(pIcode + 1, exp);
                 invalidateIcode(pIcode);
                 pIcode += 2;
                 ip++;
             } else if (idiom20(pIcode, pEnd, pProc)) {
                 lhs = idCondExp(pIcode + 1, SRC, pProc, ip, pIcode, USE);
-                if (pIcode->ic.ll.opcode == iDEC)
+                if (pIcode->ll.opcode == iDEC)
                     lhs = unaryCondExp(PRE_DEC, lhs);
                 else
                     lhs = unaryCondExp(PRE_INC, lhs);
                 rhs = idCondExp(pIcode + 2, SRC, pProc, ip, pIcode + 3, USE);
-                exp = boolCondExp(lhs, rhs, condOpJCond[(pIcode + 3)->ic.ll.opcode - iJB]);
+                exp = boolCondExp(lhs, rhs, condOpJCond[(pIcode + 3)->ll.opcode - iJB]);
                 newJCondHlIcode(pIcode + 3, exp);
                 invalidateIcode(pIcode);
                 invalidateIcode(pIcode + 1);
@@ -910,30 +910,30 @@ void findIdioms(PPROC pProc)
         case iCALLF:
             /* Check for library functions that return a long register.
                Propagate this result */
-            if ((pIcode->ic.ll.immed.proc.proc->flg & PROC_ISLIB) &&
-                (pIcode->ic.ll.immed.proc.proc->flg & PROC_IS_FUNC)) {
-                if ((pIcode->ic.ll.immed.proc.proc->retVal.type == TYPE_LONG_SIGN) ||
-                    (pIcode->ic.ll.immed.proc.proc->retVal.type == TYPE_LONG_UNSIGN))
+            if ((pIcode->ll.immed.proc.proc->flg & PROC_ISLIB) &&
+                (pIcode->ll.immed.proc.proc->flg & PROC_IS_FUNC)) {
+                if ((pIcode->ll.immed.proc.proc->retVal.type == TYPE_LONG_SIGN) ||
+                    (pIcode->ll.immed.proc.proc->retVal.type == TYPE_LONG_UNSIGN))
                     newLongRegId(&pProc->localId, TYPE_LONG_SIGN, rDX, rAX, ip);
             }
 
             // Check for idioms
             if ((idx = idiom3(pIcode, pEnd))) // idiom 3
             {
-                if (pIcode->ic.ll.flg & I) {
-                    (pIcode->ic.ll.immed.proc.proc)->cbParam = (int16_t)idx;
-                    pIcode->ic.ll.immed.proc.cb = idx;
-                    (pIcode->ic.ll.immed.proc.proc)->flg |= CALL_C;
+                if (pIcode->ll.flg & I) {
+                    (pIcode->ll.immed.proc.proc)->cbParam = (int16_t)idx;
+                    pIcode->ll.immed.proc.cb = idx;
+                    (pIcode->ll.immed.proc.proc)->flg |= CALL_C;
                     pIcode++;
                     invalidateIcode(pIcode++);
                     ip++;
                 }
             } else if ((idx = idiom17(pIcode, pEnd))) // idiom 17
             {
-                if (pIcode->ic.ll.flg & I) {
-                    (pIcode->ic.ll.immed.proc.proc)->cbParam = (int16_t)idx;
-                    pIcode->ic.ll.immed.proc.cb = idx;
-                    (pIcode->ic.ll.immed.proc.proc)->flg |= CALL_C;
+                if (pIcode->ll.flg & I) {
+                    (pIcode->ll.immed.proc.proc)->cbParam = (int16_t)idx;
+                    pIcode->ll.immed.proc.cb = idx;
+                    (pIcode->ll.immed.proc.proc)->flg |= CALL_C;
                     ip += idx / 2 - 1;
                     pIcode++;
                     for (idx /= 2; idx > 0; idx--)
@@ -964,10 +964,10 @@ void findIdioms(PPROC pProc)
 
         case iSAR: // Idiom 8
             if (idiom8(pIcode, pEnd)) {
-                idx = newLongRegId(&pProc->localId, TYPE_LONG_SIGN, pIcode->ic.ll.dst.regi,
-                                   (pIcode + 1)->ic.ll.dst.regi, ip);
+                idx = newLongRegId(&pProc->localId, TYPE_LONG_SIGN, pIcode->ll.dst.regi,
+                                   (pIcode + 1)->ll.dst.regi, ip);
                 lhs = idCondExpLongIdx(idx);
-                setRegDU(pIcode, (pIcode + 1)->ic.ll.dst.regi, USE_DEF);
+                setRegDU(pIcode, (pIcode + 1)->ll.dst.regi, USE_DEF);
                 rhs = idCondExpKte(1, 2);
                 exp = boolCondExp(lhs, rhs, SHR);
                 newAsgnHlIcode(pIcode, lhs, exp);
@@ -981,7 +981,7 @@ void findIdioms(PPROC pProc)
         case iSHL:
             if ((idx = idiom15(pIcode, pEnd))) // idiom 15
             {
-                lhs = idCondExpReg(pIcode->ic.ll.dst.regi, pIcode->ic.ll.flg & NO_SRC_B,
+                lhs = idCondExpReg(pIcode->ll.dst.regi, pIcode->ll.flg & NO_SRC_B,
                                    &pProc->localId);
                 rhs = idCondExpKte(idx, 2);
                 exp = boolCondExp(lhs, rhs, SHL);
@@ -993,10 +993,10 @@ void findIdioms(PPROC pProc)
                 }
             } else if (idiom12(pIcode, pEnd)) // idiom 12
             {
-                idx = newLongRegId(&pProc->localId, TYPE_LONG_UNSIGN, (pIcode + 1)->ic.ll.dst.regi,
-                                   pIcode->ic.ll.dst.regi, ip);
+                idx = newLongRegId(&pProc->localId, TYPE_LONG_UNSIGN, (pIcode + 1)->ll.dst.regi,
+                                   pIcode->ll.dst.regi, ip);
                 lhs = idCondExpLongIdx(idx);
-                setRegDU(pIcode, (pIcode + 1)->ic.ll.dst.regi, USE_DEF);
+                setRegDU(pIcode, (pIcode + 1)->ll.dst.regi, USE_DEF);
                 rhs = idCondExpKte(1, 2);
                 exp = boolCondExp(lhs, rhs, SHL);
                 newAsgnHlIcode(pIcode, lhs, exp);
@@ -1009,10 +1009,10 @@ void findIdioms(PPROC pProc)
 
         case iSHR: // Idiom 9
             if (idiom9(pIcode, pEnd)) {
-                idx = newLongRegId(&pProc->localId, TYPE_LONG_UNSIGN, pIcode->ic.ll.dst.regi,
-                                   (pIcode + 1)->ic.ll.dst.regi, ip);
+                idx = newLongRegId(&pProc->localId, TYPE_LONG_UNSIGN, pIcode->ll.dst.regi,
+                                   (pIcode + 1)->ll.dst.regi, ip);
                 lhs = idCondExpLongIdx(idx);
-                setRegDU(pIcode, (pIcode + 1)->ic.ll.dst.regi, USE_DEF);
+                setRegDU(pIcode, (pIcode + 1)->ll.dst.regi, USE_DEF);
                 rhs = idCondExpKte(1, 2);
                 exp = boolCondExp(lhs, rhs, SHR);
                 newAsgnHlIcode(pIcode, lhs, exp);
@@ -1051,7 +1051,7 @@ void findIdioms(PPROC pProc)
                 pIcode += 3;
                 ip += 2;
             } else if (idiom16(pIcode, pEnd)) {
-                lhs = idCondExpReg(pIcode->ic.ll.dst.regi, pIcode->ic.ll.flg, &pProc->localId);
+                lhs = idCondExpReg(pIcode->ll.dst.regi, pIcode->ll.flg, &pProc->localId);
                 rhs = copyCondExp(lhs);
                 rhs = unaryCondExp(NEGATION, lhs);
                 newAsgnHlIcode(pIcode, lhs, rhs);
@@ -1076,7 +1076,7 @@ void findIdioms(PPROC pProc)
         case iXOR: // Idiom 7
             if (idiom21(pIcode, pEnd)) {
                 lhs = idCondExpLong(&pProc->localId, DST, pIcode, HIGH_FIRST, ip, DEF, 1);
-                rhs = idCondExpKte((pIcode + 1)->ic.ll.immed.op, 4);
+                rhs = idCondExpKte((pIcode + 1)->ll.immed.op, 4);
                 newAsgnHlIcode(pIcode, lhs, rhs);
                 pIcode->du.use = 0; // clear register used in iXOR
                 invalidateIcode(pIcode + 1);
@@ -1087,7 +1087,7 @@ void findIdioms(PPROC pProc)
                 rhs = idCondExpKte(0, 2);
                 newAsgnHlIcode(pIcode, lhs, rhs);
                 pIcode->du.use = 0; // clear register used in iXOR
-                pIcode->ic.ll.flg |= I;
+                pIcode->ll.flg |= I;
             }
             pIcode++;
             break;
@@ -1125,9 +1125,9 @@ void bindIcodeOff(PPROC pProc)
 
     // Flag all jump targets for BB construction and disassembly stage 2
     for (int i = 0; i < pProc->Icode.numIcode; i++)
-        if ((pIcode[i].ic.ll.flg & I) && JmpInst(pIcode[i].ic.ll.opcode)) {
-            if (labelSrch(pIcode, pProc->Icode.numIcode, pIcode[i].ic.ll.immed.op, &j))
-                pIcode[j].ic.ll.flg |= TARGET;
+        if ((pIcode[i].ll.flg & I) && JmpInst(pIcode[i].ll.opcode)) {
+            if (labelSrch(pIcode, pProc->Icode.numIcode, pIcode[i].ll.immed.op, &j))
+                pIcode[j].ll.flg |= TARGET;
         }
 
     /* Finally bind jump targets to Icode offsets. Jumps for which no label is found
@@ -1135,14 +1135,14 @@ void bindIcodeOff(PPROC pProc)
     pIcode = pProc->Icode.icode;
 
     for (int i = 0; i < pProc->Icode.numIcode; i++)
-        if (JmpInst(pIcode[i].ic.ll.opcode)) {
-            if (pIcode[i].ic.ll.flg & I) {
-                if (!labelSrch(pIcode, pProc->Icode.numIcode, pIcode[i].ic.ll.immed.op,
-                               (int *)&pIcode[i].ic.ll.immed.op))
-                    pIcode[i].ic.ll.flg |= NO_LABEL;
-            } else if (pIcode[i].ic.ll.flg & SWITCH) {
-                p = pIcode[i].ic.ll.caseTbl.entries;
-                for (j = 0; j < pIcode[i].ic.ll.caseTbl.numEntries; j++, p++)
+        if (JmpInst(pIcode[i].ll.opcode)) {
+            if (pIcode[i].ll.flg & I) {
+                if (!labelSrch(pIcode, pProc->Icode.numIcode, pIcode[i].ll.immed.op,
+                               (int *)&pIcode[i].ll.immed.op))
+                    pIcode[i].ll.flg |= NO_LABEL;
+            } else if (pIcode[i].ll.flg & SWITCH) {
+                p = pIcode[i].ll.caseTbl.entries;
+                for (j = 0; j < pIcode[i].ll.caseTbl.numEntries; j++, p++)
                     labelSrch(pIcode, pProc->Icode.numIcode, *p, (int *)p);
             }
         }

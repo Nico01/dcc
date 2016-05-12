@@ -309,7 +309,7 @@ int scan(uint32_t ip, PICODE p)
 
     memset(p, 0, sizeof(ICODE));
     p->type = LOW_LEVEL;
-    p->ic.ll.label = ip; // ip is absolute offset into image
+    p->ll.label = ip; // ip is absolute offset into image
 
     if (ip >= prog.cbImage) {
         return (IP_OUT_OF_RANGE);
@@ -321,19 +321,19 @@ int scan(uint32_t ip, PICODE p)
 
     do {
         op = *pInst++;                           // First state - trivial
-        p->ic.ll.opcode = stateTable[op].opcode; // Convert to Icode.opcode
-        p->ic.ll.flg = stateTable[op].flg & ICODEMASK;
-        p->ic.ll.flagDU.d = stateTable[op].df;
-        p->ic.ll.flagDU.u = stateTable[op].uf;
+        p->ll.opcode = stateTable[op].opcode; // Convert to Icode.opcode
+        p->ll.flg = stateTable[op].flg & ICODEMASK;
+        p->ll.flagDU.d = stateTable[op].df;
+        p->ll.flagDU.u = stateTable[op].uf;
 
         (*stateTable[op].state1)(op); // Second state
         (*stateTable[op].state2)(op); // Third state
 
     } while (stateTable[op].state1 == prefix); // Loop if prefix
 
-    if (p->ic.ll.opcode) {
+    if (p->ll.opcode) {
         // Save bytes of image used
-        p->ic.ll.numBytes = ((pInst - prog.Image) - ip);
+        p->ll.numBytes = ((pInst - prog.Image) - ip);
         return ((SegPrefix) ? FUNNY_SEGOVR : (RepPrefix ? FUNNY_REP : 0)); // Seg. Override invalid
                                                                            // REP prefix invalid
     }
@@ -376,7 +376,7 @@ static int signex(uint8_t b)
 static void setAddress(int i, bool fdst, uint16_t seg, int16_t reg, uint16_t off)
 {
     // If not to register (i.e. to r/m), and talking about r/m, then this is dest
-    PMEM pm = (!(stateTable[i].flg & TO_REG) == fdst) ? &pIcode->ic.ll.dst : &pIcode->ic.ll.src;
+    PMEM pm = (!(stateTable[i].flg & TO_REG) == fdst) ? &pIcode->ll.dst : &pIcode->ll.src;
 
     /* Set segment. A later procedure (lookupAddr in proclist.c) will
        provide the value of this segment in the field segValue. */
@@ -411,7 +411,7 @@ static void rm(int i)
     case 0: // No disp unless rm == 6
         if (rm == 6) {
             setAddress(i, true, SegPrefix, 0, getWord());
-            pIcode->ic.ll.flg |= WORD_OFF;
+            pIcode->ll.flg |= WORD_OFF;
         } else
             setAddress(i, true, SegPrefix, rm + INDEXBASE, 0);
         break;
@@ -422,7 +422,7 @@ static void rm(int i)
 
     case 2: // 2 byte disp
         setAddress(i, true, SegPrefix, rm + INDEXBASE, getWord());
-        pIcode->ic.ll.flg |= WORD_OFF;
+        pIcode->ll.flg |= WORD_OFF;
         break;
 
     case 3: // reg
@@ -431,8 +431,8 @@ static void rm(int i)
     }
 
     if ((stateTable[i].flg & NSP) &&
-        (pIcode->ic.ll.src.regi == rSP || pIcode->ic.ll.dst.regi == rSP))
-        pIcode->ic.ll.flg |= NOT_HLL;
+        (pIcode->ll.src.regi == rSP || pIcode->ll.dst.regi == rSP))
+        pIcode->ll.flg |= NOT_HLL;
 }
 
 
@@ -449,7 +449,7 @@ static void segrm(int i)
     int reg = REG(*pInst) + rES;
 
     if (reg > rDS || (reg == rCS && (stateTable[i].flg & TO_REG)))
-        pIcode->ic.ll.opcode = 0;
+        pIcode->ll.opcode = 0;
     else {
         setAddress(i, false, 0, (int16_t)reg, 0);
         rm(i);
@@ -460,7 +460,7 @@ static void segrm(int i)
 static void regop(int i)
 {
     setAddress(i, false, 0, ((int16_t)i & 7) + rAX, 0);
-    pIcode->ic.ll.dst.regi = pIcode->ic.ll.src.regi;
+    pIcode->ll.dst.regi = pIcode->ll.src.regi;
 }
 
 
@@ -478,12 +478,12 @@ static void axImp(int i)
 
 static void axSrcIm(int i) // Implied AX source
 {
-    pIcode->ic.ll.src.regi = rAX;
+    pIcode->ll.src.regi = rAX;
 }
 
 static void alImp(int i) // Implied AL source
 {
-    pIcode->ic.ll.src.regi = rAL;
+    pIcode->ll.src.regi = rAL;
 }
 
 // memImp - Plugs implied src memory operand with any segment override
@@ -496,14 +496,14 @@ static void memImp(int i)
 static void memOnly(int i)
 {
     if ((*pInst & 0xC0) == 0xC0)
-        pIcode->ic.ll.opcode = 0;
+        pIcode->ll.opcode = 0;
 }
 
 // memReg0 - modrm for 'memOnly' and Reg field must also be 0
 static void memReg0(int i)
 {
     if (REG(*pInst) || (*pInst & 0xC0) == 0xC0)
-        pIcode->ic.ll.opcode = 0;
+        pIcode->ll.opcode = 0;
     else
         rm(i);
 }
@@ -514,13 +514,13 @@ static void immed(int i)
     static llIcode immedTable[8] = { iADD, iOR, iADC, iSBB, iAND, iSUB, iXOR, iCMP };
     static uint8_t uf[8] = { 0, 0, Cf, Cf, 0, 0, 0, 0 };
 
-    pIcode->ic.ll.opcode = immedTable[REG(*pInst)];
-    pIcode->ic.ll.flagDU.u = uf[REG(*pInst)];
-    pIcode->ic.ll.flagDU.d = (Sf | Zf | Cf);
+    pIcode->ll.opcode = immedTable[REG(*pInst)];
+    pIcode->ll.flagDU.u = uf[REG(*pInst)];
+    pIcode->ll.flagDU.d = (Sf | Zf | Cf);
     rm(i);
 
-    if (pIcode->ic.ll.opcode == iADD || pIcode->ic.ll.opcode == iSUB)
-        pIcode->ic.ll.flg &= ~NOT_HLL; // Allow ADD/SUB SP, immed
+    if (pIcode->ll.opcode == iADD || pIcode->ll.opcode == iSUB)
+        pIcode->ll.flg &= ~NOT_HLL; // Allow ADD/SUB SP, immed
 }
 
 // shift  - Sets up dst and opcode from modrm byte
@@ -530,11 +530,11 @@ static void shift(int i)
     static uint8_t uf[8] = { 0, 0, Cf, Cf, 0, 0, 0, 0 };
     static uint8_t df[8] = { Cf, Cf, Cf, Cf, Sf | Zf | Cf, Sf | Zf | Cf, 0, Sf | Zf | Cf };
 
-    pIcode->ic.ll.opcode = shiftTable[REG(*pInst)];
-    pIcode->ic.ll.flagDU.u = uf[REG(*pInst)];
-    pIcode->ic.ll.flagDU.d = df[REG(*pInst)];
+    pIcode->ll.opcode = shiftTable[REG(*pInst)];
+    pIcode->ll.flagDU.u = uf[REG(*pInst)];
+    pIcode->ll.flagDU.d = df[REG(*pInst)];
     rm(i);
-    pIcode->ic.ll.src.regi = rCL;
+    pIcode->ll.src.regi = rCL;
 }
 
 // trans - Sets up dst and opcode from modrm byte
@@ -544,17 +544,17 @@ static void trans(int i)
     static uint8_t df[8] = { Sf | Zf, Sf | Zf, 0, 0, 0, 0, 0, 0 };
 
     if ((uint8_t)REG(*pInst) < 2 || !(stateTable[i].flg & B)) { // INC & DEC
-        pIcode->ic.ll.opcode = transTable[REG(*pInst)];         // valid on bytes
-        pIcode->ic.ll.flagDU.d = df[REG(*pInst)];
+        pIcode->ll.opcode = transTable[REG(*pInst)];         // valid on bytes
+        pIcode->ll.flagDU.d = df[REG(*pInst)];
         rm(i);
-        memcpy(&pIcode->ic.ll.src, &pIcode->ic.ll.dst, sizeof(ICODEMEM));
+        memcpy(&pIcode->ll.src, &pIcode->ll.dst, sizeof(ICODEMEM));
 
-        if (pIcode->ic.ll.opcode == iJMP || pIcode->ic.ll.opcode == iCALL ||
-            pIcode->ic.ll.opcode == iCALLF)
-            pIcode->ic.ll.flg |= NO_OPS;
-        else if (pIcode->ic.ll.opcode == iINC || pIcode->ic.ll.opcode == iPUSH ||
-                 pIcode->ic.ll.opcode == iDEC)
-            pIcode->ic.ll.flg |= NO_SRC;
+        if (pIcode->ll.opcode == iJMP || pIcode->ll.opcode == iCALL ||
+            pIcode->ll.opcode == iCALLF)
+            pIcode->ll.flg |= NO_OPS;
+        else if (pIcode->ll.opcode == iINC || pIcode->ll.opcode == iPUSH ||
+                 pIcode->ll.opcode == iDEC)
+            pIcode->ll.flg |= NO_SRC;
     }
 }
 
@@ -565,8 +565,8 @@ static void arith(int i)
     static uint8_t df[8] = { Sf | Zf | Cf, 0, 0, Sf | Zf | Cf, Sf | Zf | Cf,
                              Sf | Zf | Cf, Sf | Zf | Cf, Sf | Zf | Cf };
 
-    uint8_t opcode = pIcode->ic.ll.opcode = arithTable[REG(*pInst)];
-    pIcode->ic.ll.flagDU.d = df[REG(*pInst)];
+    uint8_t opcode = pIcode->ll.opcode = arithTable[REG(*pInst)];
+    pIcode->ll.flagDU.d = df[REG(*pInst)];
     rm(i);
 
     if (opcode == iTEST) {
@@ -575,41 +575,41 @@ static void arith(int i)
         else
             data2(i);
     } else if (!(opcode == iNOT || opcode == iNEG)) {
-        memcpy(&pIcode->ic.ll.src, &pIcode->ic.ll.dst, sizeof(ICODEMEM));
+        memcpy(&pIcode->ll.src, &pIcode->ll.dst, sizeof(ICODEMEM));
         setAddress(i, true, 0, rAX, 0); // dst = AX
     } else if (opcode == iNEG || opcode == iNOT)
-        pIcode->ic.ll.flg |= NO_SRC;
+        pIcode->ll.flg |= NO_SRC;
 
     if ((opcode == iDIV) || (opcode == iIDIV)) {
-        if ((pIcode->ic.ll.flg & B) != B)
-            pIcode->ic.ll.flg |= IM_TMP_DST;
+        if ((pIcode->ll.flg & B) != B)
+            pIcode->ll.flg |= IM_TMP_DST;
     }
 }
 
 // data1 - Sets up immed from 1 byte data
 static void data1(int i)
 {
-    pIcode->ic.ll.immed.op = (stateTable[i].flg & S) ? signex(*pInst++) : *pInst++;
-    pIcode->ic.ll.flg |= I;
+    pIcode->ll.immed.op = (stateTable[i].flg & S) ? signex(*pInst++) : *pInst++;
+    pIcode->ll.flg |= I;
 }
 
 // data2 - Sets up immed from 2 byte data
 static void data2(int i)
 {
     if (relocItem(pInst))
-        pIcode->ic.ll.flg |= SEG_IMMED;
+        pIcode->ll.flg |= SEG_IMMED;
 
     /* ENTER is a special case, it does not take a destination operand, but this field
        is being used as the number of bytes to allocate on the stack.
        The procedure level is stored in the immediate field.
        There is no source operand; therefore, the flag flg is set to NO_OPS. */
-    if (pIcode->ic.ll.opcode == iENTER) {
-        pIcode->ic.ll.dst.off = getWord();
-        pIcode->ic.ll.flg |= NO_OPS;
+    if (pIcode->ll.opcode == iENTER) {
+        pIcode->ll.dst.off = getWord();
+        pIcode->ll.flg |= NO_OPS;
     } else
-        pIcode->ic.ll.immed.op = getWord();
+        pIcode->ll.immed.op = getWord();
 
-    pIcode->ic.ll.flg |= I;
+    pIcode->ll.flg |= I;
 }
 
 // dispM - 2 byte offset without modrm (== mod 0, rm 6) (Note:TO_REG bits are reversed)
@@ -623,8 +623,8 @@ static void dispN(int i)
 {
     long off = (short)getWord(); // Signed displacement
 
-    pIcode->ic.ll.immed.op = (uint32_t)(off + (pInst - prog.Image));
-    pIcode->ic.ll.flg |= I;
+    pIcode->ll.immed.op = (uint32_t)(off + (pInst - prog.Image));
+    pIcode->ll.flg |= I;
 }
 
 // dispS - 1 byte disp as immed relative to ip
@@ -632,8 +632,8 @@ static void dispS(int i)
 {
     long off = signex(*pInst++); // Signed displacement
 
-    pIcode->ic.ll.immed.op = (uint32_t)(off + (pInst - prog.Image));
-    pIcode->ic.ll.flg |= I;
+    pIcode->ll.immed.op = (uint32_t)(off + (pInst - prog.Image));
+    pIcode->ll.flg |= I;
 }
 
 // dispF - 4 byte disp as immed 20-bit target address
@@ -642,29 +642,29 @@ static void dispF(int i)
     uint32_t off = getWord();
     uint32_t seg = getWord();
 
-    pIcode->ic.ll.immed.op = off + ((uint32_t)seg << 4);
-    pIcode->ic.ll.flg |= I;
+    pIcode->ll.immed.op = off + ((uint32_t)seg << 4);
+    pIcode->ll.flg |= I;
 }
 
 // prefix - picks up prefix byte for following instruction (LOCK is ignored on purpose)
 static void prefix(int i)
 {
-    if (pIcode->ic.ll.opcode == iREPE || pIcode->ic.ll.opcode == iREPNE)
-        RepPrefix = pIcode->ic.ll.opcode;
+    if (pIcode->ll.opcode == iREPE || pIcode->ll.opcode == iREPNE)
+        RepPrefix = pIcode->ll.opcode;
     else
-        SegPrefix = pIcode->ic.ll.opcode;
+        SegPrefix = pIcode->ll.opcode;
 }
 
 // strop - checks RepPrefix and converts string instructions accordingly
 static void strop(int i)
 {
     if (RepPrefix) {
-        pIcode->ic.ll.opcode +=
-            ((pIcode->ic.ll.opcode == iCMPS || pIcode->ic.ll.opcode == iSCAS) && RepPrefix == iREPE)
+        pIcode->ll.opcode +=
+            ((pIcode->ll.opcode == iCMPS || pIcode->ll.opcode == iSCAS) && RepPrefix == iREPE)
                 ? 2
                 : 1;
-        if (pIcode->ic.ll.opcode == iREP_LODS)
-            pIcode->ic.ll.flg |= NOT_HLL;
+        if (pIcode->ll.opcode == iREP_LODS)
+            pIcode->ll.flg |= NOT_HLL;
         RepPrefix = 0;
     }
 }
@@ -672,23 +672,23 @@ static void strop(int i)
 // escop - esc operands
 static void escop(int i)
 {
-    pIcode->ic.ll.immed.op = REG(*pInst) + (uint32_t)((i & 7) << 3);
-    pIcode->ic.ll.flg |= I;
+    pIcode->ll.immed.op = REG(*pInst) + (uint32_t)((i & 7) << 3);
+    pIcode->ll.flg |= I;
     rm(i);
 }
 
 // const1
 static void const1(int i)
 {
-    pIcode->ic.ll.immed.op = 1;
-    pIcode->ic.ll.flg |= I;
+    pIcode->ll.immed.op = 1;
+    pIcode->ll.flg |= I;
 }
 
 // const3
 static void const3(int i)
 {
-    pIcode->ic.ll.immed.op = 3;
-    pIcode->ic.ll.flg |= I;
+    pIcode->ll.immed.op = 3;
+    pIcode->ll.flg |= I;
 }
 
 // none1
@@ -697,21 +697,21 @@ static void none1(int i) {}
 // none2 - Sets the NO_OPS flag if the operand is immediate
 static void none2(int i)
 {
-    if (pIcode->ic.ll.flg & I)
-        pIcode->ic.ll.flg |= NO_OPS;
+    if (pIcode->ll.flg & I)
+        pIcode->ll.flg |= NO_OPS;
 }
 
 // Checks for int 34 to int 3B - if so, converts to ESC nn instruction
 static void checkInt(int i)
 {
-    uint16_t wOp = (uint16_t)pIcode->ic.ll.immed.op;
+    uint16_t wOp = (uint16_t)pIcode->ll.immed.op;
 
     if ((wOp >= 0x34) && (wOp <= 0x3B)) {
         /* This is a Borland/Microsoft floating point emulation instruction.
            Treat as if it is an ESC opcode */
-        pIcode->ic.ll.immed.op = wOp - 0x34;
-        pIcode->ic.ll.opcode = iESC;
-        pIcode->ic.ll.flg |= FLOAT_OP;
+        pIcode->ll.immed.op = wOp - 0x34;
+        pIcode->ll.opcode = iESC;
+        pIcode->ll.flg |= FLOAT_OP;
 
         escop(wOp - 0x34 + 0xD8);
     }

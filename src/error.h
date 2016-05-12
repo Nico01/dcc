@@ -48,6 +48,7 @@ typedef enum {
 
 void fatalError(error_msg id, ...);
 void reportError(error_msg id, ...);
+void dcc_error(const char *str, ...);
 
 #endif // ERROR_H
 
