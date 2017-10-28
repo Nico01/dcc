@@ -56,11 +56,6 @@ static struct option opt[] = {
 
 static void make_asmname(const char *str)
 {
-    if (str == NULL) {
-        fprintf(stderr, "Error: '%s' invalid argument (%s, ln %d)\n", __func__, __FILE__, __LINE__);
-        exit(EXIT_FAILURE);
-    }
-
     size_t size = strlen(str) + 4;
 
     char *buff1 = calloc(size, sizeof(char));
@@ -108,7 +103,7 @@ static char *initargs(int argc, char *argv[])
         fatalError(USAGE);
 
     int c, opt_idx = 0;
-    char *filename;
+    char *filename = NULL;
 
     while ((c = getopt_long(argc, argv, "hvVsmiaAf:", opt, &opt_idx)) != -1) {
         switch (c) {
@@ -142,6 +137,10 @@ static char *initargs(int argc, char *argv[])
         default:
             fatalError(USAGE);
         }
+    }
+
+    if (filename == NULL) {
+        fatalError(USAGE);
     }
 
     if (option.asm1 || option.asm2)
