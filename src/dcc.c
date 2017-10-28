@@ -144,6 +144,9 @@ static char *initargs(int argc, char *argv[])
         }
     }
 
+    if (opt_idx < argc)
+        fatalError(USAGE);
+
     if (option.asm1 || option.asm2)
         make_asmname(filename);
 
